@@ -1,0 +1,29 @@
+<!--
+  PLACEHOLDER DE IMAGEN — SYM LAB
+  Sustituye este archivo por imágenes reales de la empresa.
+  Tamaño recomendado: 1200x630px para redes sociales / og:image
+  Formatos soportados: .jpg, .jpeg, .png, .webp, .svg
+
+  Para añadir imágenes propias:
+  1. Copia tus imágenes a esta carpeta: public/images/
+  2. Referéncialas en el código como: <img src="/images/tu-imagen.jpg" />
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#06060F"/>
+  <rect x="0" y="0" width="1200" height="630" fill="none" stroke="#1F1F3E" stroke-width="2"/>
+
+  <!-- Grid pattern -->
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#1a1a3a" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Central text -->
+  <text x="600" y="290" text-anchor="middle" fill="#DC2626" font-family="Arial Black,sans-serif" font-weight="900" font-size="80" letter-spacing="20" opacity="0.8">SYM LAB</text>
+  <text x="600" y="350" text-anchor="middle" fill="#94A3B8" font-family="Arial,sans-serif" font-size="24">Portal de Innovación I+D+i</text>
+
+  <!-- Sustituir por imagen real -->
+  <text x="600" y="420" text-anchor="middle" fill="#374151" font-family="Arial,sans-serif" font-size="14">[ Añade aquí tu imagen en public/images/ ]</text>
+</svg>

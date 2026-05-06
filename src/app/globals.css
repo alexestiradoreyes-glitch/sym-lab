@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ─── Variables globales ─────────────────────────────────── */
+:root {
+  --red:    #DC2626;
+  --red-d:  #991B1B;
+  --dark:   #06060F;
+  --surf:   #0D0D1F;
+  --card:   #13132A;
+  --bord:   #1F1F3E;
+  --blue:   #3B82F6;
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--dark);
+  color: #F8FAFC;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ─── Scrollbar personalizada ────────────────────────────── */
+::-webkit-scrollbar        { width: 8px; }
+::-webkit-scrollbar-track  { background: var(--surf); }
+::-webkit-scrollbar-thumb  { background: var(--bord); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+/* ─── Fondo con cuadrícula de laboratorio ────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(220,38,38,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220,38,38,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ─── Efecto de brillo ───────────────────────────────────── */
+.glow-red   { box-shadow: 0 0 40px rgba(220,38,38,0.25); }
+.glow-blue  { box-shadow: 0 0 40px rgba(59,130,246,0.2); }
+
+.text-glow {
+  text-shadow: 0 0 60px rgba(220,38,38,0.4);
+}
+
+/* ─── Gradiente animado del hero ─────────────────────────── */
+.hero-gradient {
+  background: radial-gradient(ellipse at 20% 50%, rgba(220,38,38,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 60% 80%, rgba(220,38,38,0.06) 0%, transparent 40%);
+}
+
+/* ─── Campos de formulario ───────────────────────────────── */
+@layer components {
+  .input-field {
+    @apply bg-sym-surf border border-sym-bord text-white rounded-xl px-4 py-3 w-full
+           focus:border-sym-red focus:outline-none focus:ring-1 focus:ring-sym-red/50
+           transition-all duration-200 placeholder:text-slate-600 text-sm;
+  }
+
+  .input-label {
+    @apply text-slate-400 text-sm font-medium mb-2 block;
+  }
+
+  .input-error {
+    @apply text-red-400 text-xs mt-1.5 flex items-center gap-1;
+  }
+
+  .btn-primary {
+    @apply bg-sym-red hover:bg-sym-red-d text-white font-semibold rounded-xl px-6 py-3
+           transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+           focus:outline-none focus:ring-2 focus:ring-sym-red/50 focus:ring-offset-2
+           focus:ring-offset-sym-dark;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border border-sym-bord text-slate-300 hover:border-sym-red
+           hover:text-white font-semibold rounded-xl px-6 py-3
+           transition-all duration-200 focus:outline-none;
+  }
+
+  .card {
+    @apply bg-sym-card border border-sym-bord rounded-2xl;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-white;
+  }
+
+  .section-subtitle {
+    @apply text-slate-400 text-base mt-2;
+  }
+}
+
+/* ─── Animaciones de entrada ─────────────────────────────── */
+.animate-fadein  { animation: fadein 0.6s ease forwards; }
+.animate-slideup { animation: slideup 0.5s ease forwards; }
+
+@keyframes fadein  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideup { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+
+/* ─── Hover de tarjeta ───────────────────────────────────── */
+.card-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+/* ─── Línea decorativa roja ──────────────────────────────── */
+.red-line {
+  height: 3px;
+  background: linear-gradient(90deg, var(--red), transparent);
+  border-radius: 2px;
+}
+
+/* ─── PWA / Safe areas iOS ──────────────────────────────── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Espacio para barra inferior en móvil */
+@media (max-width: 767px) {
+  .pb-mobile {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Input font-size 16px evita zoom automático en iOS */
+@media (max-width: 767px) {
+  .input-field {
+    font-size: 16px !important;
+  }
+}
