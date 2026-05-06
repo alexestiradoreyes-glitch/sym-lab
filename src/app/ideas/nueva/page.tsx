@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import IdeaForm from '@/components/IdeaForm'
@@ -40,7 +41,9 @@ export default function PaginaFormulario() {
       <main className="flex-1 py-10 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <div className="card p-6 sm:p-10">
-            <IdeaForm />
+            <Suspense fallback={<div className="text-slate-400 text-sm">Cargando formulario...</div>}>
+              <IdeaForm />
+            </Suspense>
           </div>
         </div>
       </main>
