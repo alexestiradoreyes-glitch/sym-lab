@@ -165,6 +165,12 @@ export default function IdeaForm() {
       const json = await res.json()
 
       if (res.ok) {
+        // Notificar al panel de Administración (misma sesión de navegador)
+        try {
+          const bc = new BroadcastChannel('sym-lab-ideas')
+          bc.postMessage({ tipo: 'nueva-idea', id: json.id })
+          bc.close()
+        } catch { /* navegador sin soporte */ }
         router.push(`/gracias?id=${json.id}`)
       } else {
         setSubmitError(json.error || 'Error al enviar. Inténtalo de nuevo.')

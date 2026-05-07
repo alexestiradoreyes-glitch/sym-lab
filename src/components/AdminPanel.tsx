@@ -221,61 +221,66 @@ export default function AdminPanel({ ideas }: Props) {
   const [ideaAEliminar,  setIdeaAEliminar]  = useState<Idea | null>(null)
   const [eliminando,     setEliminando]     = useState(false)
   const [cargandoIdeas,  setCargandoIdeas]  = useState(ideas.length === 0)
+  const [refreshing,     setRefreshing]     = useState(false)
 
-  // Fetch client-side on mount so data is always fresh from Supabase
+  // Central refetch — usado por todos los mecanismos de actualización
+  const refetchIdeas = useCallback(() => {
+    fetch('/api/ideas')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: Idea[] | null) => { if (data) setIdeasVivas(data) })
+      .catch(() => {})
+  }, [])
+
+  // Carga inicial (siempre fresca desde Supabase)
   useEffect(() => {
     fetch('/api/ideas')
       .then(r => r.ok ? r.json() : [])
-      .then((data: Idea[]) => { if (data.length > 0) setIdeasVivas(data) })
+      .then((data: Idea[]) => setIdeasVivas(data))
       .catch(() => {})
       .finally(() => setCargandoIdeas(false))
   }, [])
 
-  // Realtime: escucha INSERT y DELETE en la tabla ideas
-  const channelRef = useRef<ReturnType<typeof supabasePublic.channel> | null>(null)
+  // Realtime Supabase — funciona si está habilitado en el dashboard
   useEffect(() => {
     const channel = supabasePublic
       .channel('ideas-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'ideas' },
-        (payload) => {
-          const r = payload.new as Record<string, unknown>
-          const nueva: Idea = {
-            id: r.id as string,
-            fechaEnvio: r.fecha_envio as string,
-            nombre: r.nombre as string,
-            empresa: (r.empresa as string) || undefined,
-            email: r.email as string,
-            telefono: (r.telefono as string) || undefined,
-            titulo: r.titulo as string,
-            categoria: r.categoria as Idea['categoria'],
-            descripcion: r.descripcion as string,
-            problemaResuelve: r.problema_resuelve as string,
-            beneficiosEsperados: r.beneficios_esperados as string,
-            nivelMadurez: r.nivel_madurez as Idea['nivelMadurez'],
-            archivos: (r.archivos as string[]) || undefined,
-            enlacesReferencia: (r.enlaces_referencia as string) || undefined,
-            consentimiento: r.consentimiento as boolean,
-          }
-          setIdeasVivas(prev =>
-            prev.find(i => i.id === nueva.id) ? prev : [nueva, ...prev]
-          )
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'ideas' },
-        (payload) => {
-          const id = (payload.old as Record<string, unknown>).id as string
-          setIdeasVivas(prev => prev.filter(i => i.id !== id))
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ideas' }, () => {
+        refetchIdeas()
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ideas' }, (payload) => {
+        const id = (payload.old as Record<string, unknown>).id as string
+        setIdeasVivas(prev => prev.filter(i => i.id !== id))
+      })
       .subscribe()
-
-    channelRef.current = channel
     return () => { supabasePublic.removeChannel(channel) }
-  }, [])
+  }, [refetchIdeas])
+
+  // BroadcastChannel — sincronización instantánea en el mismo navegador
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null
+    try {
+      bc = new BroadcastChannel('sym-lab-ideas')
+      bc.onmessage = () => refetchIdeas()
+    } catch { /* navegador sin soporte */ }
+    return () => bc?.close()
+  }, [refetchIdeas])
+
+  // Refresco automático cada 30 s cuando la pestaña está visible
+  useEffect(() => {
+    const tick = setInterval(() => {
+      if (document.visibilityState === 'visible') refetchIdeas()
+    }, 30000)
+    return () => clearInterval(tick)
+  }, [refetchIdeas])
+
+  const handleRefrescar = async () => {
+    setRefreshing(true)
+    await fetch('/api/ideas')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: Idea[] | null) => { if (data) setIdeasVivas(data) })
+      .catch(() => {})
+    setRefreshing(false)
+  }
 
   useEffect(() => {
     fetch('/api/ideas/estado').then(r => r.ok ? r.json() : {}).then(setEstados).catch(() => {})
@@ -367,6 +372,16 @@ export default function AdminPanel({ ideas }: Props) {
             />
             <p className="text-slate-400 text-xs">Panel de administración</p>
           </div>
+          <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefrescar}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white border border-sym-bord hover:border-slate-500 bg-black/30 hover:bg-white/10 py-2 px-3 rounded-xl transition-all disabled:opacity-40"
+            title="Actualizar ideas"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{refreshing ? 'Actualizando...' : 'Actualizar'}</span>
+          </button>
           <button
             onClick={handleExportar}
             disabled={exportando || ideasVivas.length === 0}
@@ -376,6 +391,7 @@ export default function AdminPanel({ ideas }: Props) {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">{exportando ? 'Descargando...' : 'Exportar Excel'}</span>
           </button>
+          </div>
         </div>
       </header>
 
