@@ -2,6 +2,8 @@ import { leerIdeas } from '@/lib/excel'
 import AdminPanel from '@/components/AdminPanel'
 import type { Idea } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Administración — SYM LAB',
 }

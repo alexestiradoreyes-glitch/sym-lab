@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { supabasePublic } from '@/lib/supabase-public'
 import Image from 'next/image'
 import {
   Download, Search, ChevronDown, ChevronUp,
@@ -171,6 +172,52 @@ export default function AdminPanel({ ideas }: Props) {
   const [eliminando,     setEliminando]     = useState(false)
 
   useEffect(() => { setIdeasVivas(ideas) }, [ideas])
+
+  // Realtime: escucha INSERT y DELETE en la tabla ideas
+  const channelRef = useRef<ReturnType<typeof supabasePublic.channel> | null>(null)
+  useEffect(() => {
+    const channel = supabasePublic
+      .channel('ideas-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'ideas' },
+        (payload) => {
+          const r = payload.new as Record<string, unknown>
+          const nueva: Idea = {
+            id: r.id as string,
+            fechaEnvio: r.fecha_envio as string,
+            nombre: r.nombre as string,
+            empresa: (r.empresa as string) || undefined,
+            email: r.email as string,
+            telefono: (r.telefono as string) || undefined,
+            titulo: r.titulo as string,
+            categoria: r.categoria as Idea['categoria'],
+            descripcion: r.descripcion as string,
+            problemaResuelve: r.problema_resuelve as string,
+            beneficiosEsperados: r.beneficios_esperados as string,
+            nivelMadurez: r.nivel_madurez as Idea['nivelMadurez'],
+            archivos: (r.archivos as string[]) || undefined,
+            enlacesReferencia: (r.enlaces_referencia as string) || undefined,
+            consentimiento: r.consentimiento as boolean,
+          }
+          setIdeasVivas(prev =>
+            prev.find(i => i.id === nueva.id) ? prev : [nueva, ...prev]
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'ideas' },
+        (payload) => {
+          const id = (payload.old as Record<string, unknown>).id as string
+          setIdeasVivas(prev => prev.filter(i => i.id !== id))
+        }
+      )
+      .subscribe()
+
+    channelRef.current = channel
+    return () => { supabasePublic.removeChannel(channel) }
+  }, [])
 
   useEffect(() => {
     fetch('/api/ideas/estado').then(r => r.ok ? r.json() : {}).then(setEstados).catch(() => {})
