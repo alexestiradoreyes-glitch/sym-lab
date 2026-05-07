@@ -112,18 +112,19 @@ export async function POST(request: NextRequest) {
       audioDuracion,
     }
 
-    // ── Guardar en Excel (no detiene el flujo si falla) ──
-    let excelOk    = true
-    let excelError = ''
+    // ── Guardar en base de datos (OBLIGATORIO — si falla, devuelve error) ──
     try {
       await guardarIdea(idea)
     } catch (err) {
-      excelOk    = false
-      excelError = (err as Error).message
-      console.error('[SYM LAB] Error guardando Excel:', err)
+      const msg = (err as Error).message
+      console.error('[SYM LAB] Error guardando idea en Supabase:', msg)
+      return NextResponse.json(
+        { error: `No se pudo guardar la idea en la base de datos: ${msg}` },
+        { status: 500 }
+      )
     }
 
-    // ── Notificación push ──
+    // ── Notificación push (no bloquea) ──
     enviarPush({
       tipo: 'idea',
       titulo: '💡 Nueva idea enviada',
@@ -132,26 +133,16 @@ export async function POST(request: NextRequest) {
       url: '/admin',
     }).catch(() => {})
 
-    // ── Enviar email (no detiene el flujo si falla) ──
-    let emailOk    = true
-    let emailError = ''
-    try {
-      await enviarEmailIdea(idea)
-    } catch (err) {
-      emailOk    = false
-      emailError = (err as Error).message
+    // ── Enviar email (no bloquea) ──
+    enviarEmailIdea(idea).catch(err =>
       console.error('[SYM LAB] Error enviando email:', err)
-    }
+    )
 
     return NextResponse.json({
       success: true,
       id,
       fechaEnvio,
-      excelOk,
-      emailOk,
       message: '¡Idea registrada correctamente!',
-      ...(!excelOk ? { excelError } : {}),
-      ...(!emailOk ? { emailError } : {}),
     })
 
   } catch (error) {
