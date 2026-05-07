@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
     const nivelMadurez         = (fd.get('nivelMadurez')         as string)?.trim()
     const enlacesReferencia    = (fd.get('enlacesReferencia')    as string)?.trim()
     const consentimiento       = fd.get('consentimiento') === 'true'
+    const audioUrl             = (fd.get('audioUrl')             as string)?.trim() || undefined
+    const audioDuracionStr     = fd.get('audioDuracion') as string | null
+    const audioDuracion        = audioDuracionStr ? parseInt(audioDuracionStr, 10) : undefined
 
     // ── Validación básica de campos obligatorios ──
     const errores: string[] = []
@@ -107,6 +110,8 @@ export async function POST(request: NextRequest) {
       archivos:            archivosGuardados.length > 0 ? archivosGuardados : undefined,
       enlacesReferencia:   enlacesReferencia || undefined,
       consentimiento,
+      audioUrl,
+      audioDuracion,
     }
 
     // ── Guardar en Excel (no detiene el flujo si falla) ──

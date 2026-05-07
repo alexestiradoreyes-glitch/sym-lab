@@ -76,6 +76,8 @@ export interface Idea {
   archivos?: string[]
   enlacesReferencia?: string
   consentimiento: boolean
+  audioUrl?: string
+  audioDuracion?: number
 }
 
 export interface Comentario {
@@ -85,6 +87,7 @@ export interface Comentario {
   texto: string
   rol: RolComentario
   fechaHora: string
+  audioUrl?: string
 }
 
 export interface Enlace {

@@ -19,6 +19,8 @@ export async function guardarIdea(idea: Idea): Promise<void> {
     archivos: idea.archivos || null,
     enlaces_referencia: idea.enlacesReferencia || null,
     consentimiento: idea.consentimiento,
+    audio_url: idea.audioUrl || null,
+    audio_duracion: idea.audioDuracion || null,
   })
   if (error) throw new Error(error.message)
 }
@@ -50,6 +52,8 @@ export async function leerIdeas(): Promise<Idea[]> {
     archivos: row.archivos || undefined,
     enlacesReferencia: row.enlaces_referencia || undefined,
     consentimiento: row.consentimiento,
+    audioUrl: row.audio_url || undefined,
+    audioDuracion: row.audio_duracion || undefined,
   }))
 }
 

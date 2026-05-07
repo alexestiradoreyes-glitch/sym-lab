@@ -7,9 +7,10 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Upload, X, FileText, ImageIcon, AlertCircle,
-  Loader2, ChevronRight, File as FileIcon, Link2,
+  Loader2, ChevronRight, File as FileIcon, Link2, Mic,
 } from 'lucide-react'
 import { CATEGORIAS, NIVELES_MADUREZ } from '@/lib/types'
+import AudioRecorder from './AudioRecorder'
 
 /* ─── Schema de validación ─── */
 const schema = z.object({
@@ -64,6 +65,8 @@ export default function IdeaForm() {
   const [dragOver, setDragOver]           = useState(false)
   const [isSubmitting, setIsSubmitting]   = useState(false)
   const [submitError, setSubmitError]     = useState<string | null>(null)
+  const [audioBlob, setAudioBlob]         = useState<Blob | null>(null)
+  const [audioDuracion, setAudioDuracion] = useState(0)
   const inputRef     = useRef<HTMLInputElement>(null)
   const router       = useRouter()
   const searchParams = useSearchParams()
@@ -130,6 +133,23 @@ export default function IdeaForm() {
       if (val !== undefined && val !== null) fd.append(key, String(val))
     })
     archivos.forEach(f => fd.append('archivos', f))
+
+    // Upload audio first if the user recorded one
+    if (audioBlob) {
+      try {
+        const afd = new FormData()
+        afd.append('audio', audioBlob, 'idea.webm')
+        afd.append('contexto', 'ideas')
+        const ares = await fetch('/api/audio/upload', { method: 'POST', body: afd })
+        if (ares.ok) {
+          const { url } = await ares.json()
+          fd.append('audioUrl', url)
+          fd.append('audioDuracion', String(audioDuracion))
+        }
+      } catch {
+        // Audio upload failure doesn't block idea submission
+      }
+    }
 
     try {
       const res = await fetch('/api/ideas', { method: 'POST', body: fd })
@@ -375,10 +395,34 @@ export default function IdeaForm() {
 
       <div className="border-t border-sym-bord" />
 
-      {/* ─── SECCIÓN 5: Archivos y consentimiento ─── */}
+      {/* ─── SECCIÓN 5: Audio explicativo ─── */}
       <section>
         <div className="flex items-center gap-3 mb-6">
           <span className="w-7 h-7 bg-sym-red rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">5</span>
+          <div>
+            <h2 className="text-white font-bold text-lg">Audio explicativo de la idea</h2>
+            <p className="text-slate-500 text-sm">
+              Opcional — explica tu idea con tu propia voz
+            </p>
+          </div>
+        </div>
+        <AudioRecorder
+          onAudioChange={(blob, dur) => { setAudioBlob(blob); setAudioDuracion(dur) }}
+          maxSegundos={180}
+          disabled={isSubmitting}
+        />
+        <p className="text-slate-600 text-xs mt-3 flex items-center gap-1.5">
+          <Mic className="w-3 h-3" />
+          Máximo 3 minutos. El audio se guardará junto con tu idea.
+        </p>
+      </section>
+
+      <div className="border-t border-sym-bord" />
+
+      {/* ─── SECCIÓN 6: Archivos y consentimiento ─── */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-7 h-7 bg-sym-red rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">6</span>
           <div>
             <h2 className="text-white font-bold text-lg">Documentación y privacidad</h2>
             <p className="text-slate-500 text-sm">Adjuntos opcionales y consentimiento</p>

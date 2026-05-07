@@ -16,9 +16,10 @@ export async function leerComentarios(ideaId: string): Promise<Comentario[]> {
     id: row.id,
     ideaId: row.idea_id,
     nombre: row.nombre,
-    texto: row.texto,
+    texto: row.texto ?? '',
     rol: row.rol,
     fechaHora: row.fecha_hora,
+    audioUrl: row.audio_url || undefined,
   }))
 }
 
@@ -27,9 +28,10 @@ export async function guardarComentario(comentario: Comentario): Promise<void> {
     id: comentario.id,
     idea_id: comentario.ideaId,
     nombre: comentario.nombre,
-    texto: comentario.texto,
+    texto: comentario.texto || null,
     rol: comentario.rol,
     fecha_hora: comentario.fechaHora,
+    audio_url: comentario.audioUrl || null,
   })
   if (error) throw new Error(error.message)
 }
