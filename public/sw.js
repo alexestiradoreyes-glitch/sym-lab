@@ -1,11 +1,13 @@
 // SYM LAB Service Worker — Cache-first para estáticos, Network-first para API
-const CACHE = 'symlab-v2'
+const CACHE = 'symlab-v3'
+
+// Páginas que nunca deben cachearse (datos en tiempo real)
+const NO_CACHE_PAGES = ['/admin', '/api/']
 
 const PRECACHE = [
   '/',
   '/ideas/nueva',
   '/enlaces',
-  '/admin',
   '/manifest.json',
   '/images/logo-symlab.png',
   '/icons/icon-192.png',
@@ -37,14 +39,13 @@ self.addEventListener('fetch', e => {
   if (url.pathname.startsWith('/_next/webpack-hmr')) return
   if (url.pathname.startsWith('/__nextjs')) return
 
-  // API: Network-first con fallback JSON de error
-  if (url.pathname.startsWith('/api/')) {
+  // Páginas dinámicas y API: siempre de red, nunca desde caché
+  if (NO_CACHE_PAGES.some(p => url.pathname.startsWith(p))) {
     e.respondWith(
-      fetch(request)
-        .catch(() => new Response(
-          JSON.stringify({ error: 'Sin conexión. Reconecta e inténtalo de nuevo.' }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        ))
+      fetch(request).catch(() => new Response(
+        JSON.stringify({ error: 'Sin conexión.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      ))
     )
     return
   }
