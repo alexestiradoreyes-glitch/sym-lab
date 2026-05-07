@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   if (!ideaId) {
     return NextResponse.json({ error: 'ideaId requerido' }, { status: 400 })
   }
-  const comentarios = leerComentarios(ideaId)
+  const comentarios = await leerComentarios(ideaId)
   return NextResponse.json(comentarios)
 }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       fechaHora,
     }
 
-    guardarComentario(comentario)
+    await guardarComentario(comentario)
 
     enviarPush({
       tipo: 'comentario',

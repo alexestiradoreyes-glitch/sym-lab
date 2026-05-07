@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (!sub?.endpoint || !sub?.keys) {
       return NextResponse.json({ error: 'Suscripción inválida' }, { status: 400 })
     }
-    guardarSuscripcion(sub)
+    await guardarSuscripcion(sub)
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Error guardando suscripción' }, { status: 500 })
@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const { endpoint } = await req.json()
     if (!endpoint) return NextResponse.json({ error: 'endpoint requerido' }, { status: 400 })
-    eliminarSuscripcion(endpoint)
+    await eliminarSuscripcion(endpoint)
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Error eliminando suscripción' }, { status: 500 })

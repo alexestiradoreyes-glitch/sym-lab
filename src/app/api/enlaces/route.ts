@@ -7,7 +7,7 @@ import type { CategoriaEnlace } from '@/lib/types'
 export const runtime = 'nodejs'
 
 export async function GET() {
-  const enlaces = leerEnlaces()
+  const enlaces = await leerEnlaces()
   return NextResponse.json(enlaces)
 }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       fecha,
     }
 
-    guardarEnlace(enlace)
+    await guardarEnlace(enlace)
 
     enviarPush({
       tipo: 'enlace',
@@ -63,7 +63,7 @@ export async function DELETE(request: NextRequest) {
   if (!id) {
     return NextResponse.json({ error: 'id requerido' }, { status: 400 })
   }
-  const ok = eliminarEnlace(id)
+  const ok = await eliminarEnlace(id)
   return ok
     ? NextResponse.json({ success: true })
     : NextResponse.json({ error: 'Enlace no encontrado' }, { status: 404 })

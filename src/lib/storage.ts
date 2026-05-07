@@ -1,61 +1,74 @@
-import fs   from 'fs'
-import path from 'path'
+import { supabase } from './supabase'
 import type { Comentario, Enlace } from './types'
 
-const DATA_DIR       = path.join(process.cwd(), 'data')
-const COMMENTS_FILE  = path.join(DATA_DIR, 'comments.json')
-const ENLACES_FILE   = path.join(DATA_DIR, 'enlaces.json')
+// ─── Comentarios ──────────────────────────────────────────────
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+export async function leerComentarios(ideaId: string): Promise<Comentario[]> {
+  const { data, error } = await supabase
+    .from('comentarios')
+    .select('*')
+    .eq('idea_id', ideaId)
+    .order('created_at', { ascending: true })
+
+  if (error) return []
+
+  return (data || []).map(row => ({
+    id: row.id,
+    ideaId: row.idea_id,
+    nombre: row.nombre,
+    texto: row.texto,
+    rol: row.rol,
+    fechaHora: row.fecha_hora,
+  }))
 }
 
-function readJson<T>(file: string, fallback: T): T {
-  try {
-    if (!fs.existsSync(file)) return fallback
-    const raw = fs.readFileSync(file, 'utf-8')
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
+export async function guardarComentario(comentario: Comentario): Promise<void> {
+  const { error } = await supabase.from('comentarios').insert({
+    id: comentario.id,
+    idea_id: comentario.ideaId,
+    nombre: comentario.nombre,
+    texto: comentario.texto,
+    rol: comentario.rol,
+    fecha_hora: comentario.fechaHora,
+  })
+  if (error) throw new Error(error.message)
 }
 
-function writeJson(file: string, data: unknown) {
-  ensureDataDir()
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8')
+// ─── Enlaces ──────────────────────────────────────────────────
+
+export async function leerEnlaces(): Promise<Enlace[]> {
+  const { data, error } = await supabase
+    .from('enlaces')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) return []
+
+  return (data || []).map(row => ({
+    id: row.id,
+    titulo: row.titulo,
+    url: row.url,
+    descripcion: row.descripcion || '',
+    categoria: row.categoria,
+    persona: row.persona,
+    fecha: row.fecha,
+  }))
 }
 
-// ─── Comentarios ────────────────────────────────────────────────
-
-export function leerComentarios(ideaId: string): Comentario[] {
-  const all = readJson<Record<string, Comentario[]>>(COMMENTS_FILE, {})
-  return all[ideaId] ?? []
+export async function guardarEnlace(enlace: Enlace): Promise<void> {
+  const { error } = await supabase.from('enlaces').insert({
+    id: enlace.id,
+    titulo: enlace.titulo,
+    url: enlace.url,
+    descripcion: enlace.descripcion || null,
+    categoria: enlace.categoria,
+    persona: enlace.persona,
+    fecha: enlace.fecha,
+  })
+  if (error) throw new Error(error.message)
 }
 
-export function guardarComentario(comentario: Comentario): void {
-  const all = readJson<Record<string, Comentario[]>>(COMMENTS_FILE, {})
-  if (!all[comentario.ideaId]) all[comentario.ideaId] = []
-  all[comentario.ideaId].push(comentario)
-  writeJson(COMMENTS_FILE, all)
-}
-
-// ─── Enlaces ─────────────────────────────────────────────────────
-
-export function leerEnlaces(): Enlace[] {
-  return readJson<Enlace[]>(ENLACES_FILE, [])
-}
-
-export function guardarEnlace(enlace: Enlace): void {
-  const all = readJson<Enlace[]>(ENLACES_FILE, [])
-  all.unshift(enlace)
-  writeJson(ENLACES_FILE, all)
-}
-
-export function eliminarEnlace(id: string): boolean {
-  const all = readJson<Enlace[]>(ENLACES_FILE, [])
-  const idx = all.findIndex(e => e.id === id)
-  if (idx === -1) return false
-  all.splice(idx, 1)
-  writeJson(ENLACES_FILE, all)
-  return true
+export async function eliminarEnlace(id: string): Promise<boolean> {
+  const { error } = await supabase.from('enlaces').delete().eq('id', id)
+  return !error
 }

@@ -3,17 +3,17 @@ import { leerNotificaciones, marcarLeidas, marcarTodasLeidas } from '@/lib/push'
 
 export const runtime = 'nodejs'
 
-export function GET() {
-  return NextResponse.json(leerNotificaciones())
+export async function GET() {
+  return NextResponse.json(await leerNotificaciones())
 }
 
 export async function PATCH(req: NextRequest) {
   try {
     const { ids, todas } = await req.json()
     if (todas) {
-      marcarTodasLeidas()
+      await marcarTodasLeidas()
     } else if (Array.isArray(ids)) {
-      marcarLeidas(ids)
+      await marcarLeidas(ids)
     }
     return NextResponse.json({ ok: true })
   } catch {

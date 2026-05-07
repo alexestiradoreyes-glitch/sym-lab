@@ -1,28 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { supabase } from '@/lib/supabase'
 import { enviarPush } from '@/lib/push'
 import type { EstadoIdea } from '@/lib/types'
 
 export const runtime = 'nodejs'
 
-const ESTADOS_FILE = path.join(process.cwd(), 'data', 'idea-states.json')
-
-function readEstados(): Record<string, EstadoIdea> {
-  try {
-    if (!fs.existsSync(ESTADOS_FILE)) return {}
-    return JSON.parse(fs.readFileSync(ESTADOS_FILE, 'utf-8'))
-  } catch { return {} }
-}
-
-function writeEstados(data: Record<string, EstadoIdea>) {
-  const dir = path.dirname(ESTADOS_FILE)
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-  fs.writeFileSync(ESTADOS_FILE, JSON.stringify(data, null, 2), 'utf-8')
-}
-
-export function GET() {
-  return NextResponse.json(readEstados())
+export async function GET() {
+  const { data } = await supabase.from('idea_states').select('*')
+  const result: Record<string, EstadoIdea> = {}
+  for (const row of data || []) {
+    result[row.idea_id] = row.estado as EstadoIdea
+  }
+  return NextResponse.json(result)
 }
 
 export async function PATCH(req: NextRequest) {
@@ -31,16 +20,18 @@ export async function PATCH(req: NextRequest) {
     if (!ideaId || !estado) {
       return NextResponse.json({ error: 'ideaId y estado son obligatorios' }, { status: 400 })
     }
-    const all = readEstados()
-    all[ideaId] = estado as EstadoIdea
-    writeEstados(all)
+
+    await supabase.from('idea_states').upsert(
+      { idea_id: ideaId, estado },
+      { onConflict: 'idea_id' }
+    )
 
     await enviarPush({
       tipo: 'estado',
       titulo: 'Estado de idea actualizado',
       mensaje: `"${tituloIdea}" → ${estado}`,
       persona: persona || 'Administración',
-      url: `/admin`,
+      url: '/admin',
     })
 
     return NextResponse.json({ ok: true, estado })
