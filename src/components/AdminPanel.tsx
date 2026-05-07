@@ -220,6 +220,7 @@ export default function AdminPanel({ ideas }: Props) {
   const [ideasVivas,     setIdeasVivas]     = useState<Idea[]>(ideas)
   const [ideaAEliminar,  setIdeaAEliminar]  = useState<Idea | null>(null)
   const [eliminando,     setEliminando]     = useState(false)
+  const [eliminarError,  setEliminarError]  = useState<string | null>(null)
   const [cargandoIdeas,  setCargandoIdeas]  = useState(ideas.length === 0)
   const [refreshing,     setRefreshing]     = useState(false)
 
@@ -265,11 +266,18 @@ export default function AdminPanel({ ideas }: Props) {
     return () => bc?.close()
   }, [refetchIdeas])
 
-  // Refresco automático cada 30 s cuando la pestaña está visible
+  // Refresco cuando la pestaña vuelve a estar activa (usuario vuelve de otra pestaña)
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') refetchIdeas() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [refetchIdeas])
+
+  // Refresco automático cada 15 s cuando la pestaña está visible
   useEffect(() => {
     const tick = setInterval(() => {
       if (document.visibilityState === 'visible') refetchIdeas()
-    }, 30000)
+    }, 15000)
     return () => clearInterval(tick)
   }, [refetchIdeas])
 
@@ -331,13 +339,22 @@ export default function AdminPanel({ ideas }: Props) {
   const confirmarEliminar = async () => {
     if (!ideaAEliminar) return
     setEliminando(true)
+    setEliminarError(null)
     try {
-      await fetch(`/api/ideas?id=${ideaAEliminar.id}`, { method: 'DELETE' })
-      setIdeasVivas(prev => prev.filter(i => i.id !== ideaAEliminar.id))
-      setExpandido(null)
+      const res = await fetch(`/api/ideas?id=${ideaAEliminar.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        // Solo eliminamos del estado local si la API confirmó el borrado
+        setIdeasVivas(prev => prev.filter(i => i.id !== ideaAEliminar.id))
+        setExpandido(null)
+        setIdeaAEliminar(null)
+      } else {
+        const json = await res.json().catch(() => ({}))
+        setEliminarError(json.error || 'No se pudo eliminar. Inténtalo de nuevo.')
+      }
+    } catch {
+      setEliminarError('Error de conexión. Comprueba tu internet e inténtalo de nuevo.')
     } finally {
       setEliminando(false)
-      setIdeaAEliminar(null)
     }
   }
 
@@ -686,9 +703,14 @@ export default function AdminPanel({ ideas }: Props) {
             <p className="text-slate-300 text-sm bg-sym-surf/50 rounded-xl p-4 border border-sym-bord/60">
               ¿Seguro que quieres eliminar <strong className="text-white">"{ideaAEliminar.titulo}"</strong>? Se borrarán también todos sus comentarios.
             </p>
+            {eliminarError && (
+              <p className="text-red-400 text-xs bg-red-950/40 border border-red-800/40 rounded-xl px-4 py-3">
+                {eliminarError}
+              </p>
+            )}
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setIdeaAEliminar(null)}
+                onClick={() => { setIdeaAEliminar(null); setEliminarError(null) }}
                 className="px-4 py-2 text-sm text-slate-400 hover:text-white border border-sym-bord rounded-xl hover:bg-white/5 transition-colors"
               >
                 Cancelar
