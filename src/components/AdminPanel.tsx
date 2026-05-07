@@ -6,7 +6,7 @@ import {
   Download, Search, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText, X,
-  MessageSquare, Send, Link2, RefreshCw,
+  MessageSquare, Send, Link2, RefreshCw, Trash2,
 } from 'lucide-react'
 import { Idea, CATEGORIAS, NIVELES_MADUREZ, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea } from '@/lib/types'
@@ -165,8 +165,10 @@ export default function AdminPanel({ ideas }: Props) {
   const [madFiltro,  setMadFiltro]  = useState('todos')
   const [expandido,  setExpandido]  = useState<string | null>(null)
   const [exportando, setExportando] = useState(false)
-  const [estados,    setEstados]    = useState<Record<string, EstadoIdea>>({})
-  const [ideasVivas, setIdeasVivas] = useState<Idea[]>(ideas)
+  const [estados,        setEstados]        = useState<Record<string, EstadoIdea>>({})
+  const [ideasVivas,     setIdeasVivas]     = useState<Idea[]>(ideas)
+  const [ideaAEliminar,  setIdeaAEliminar]  = useState<Idea | null>(null)
+  const [eliminando,     setEliminando]     = useState(false)
 
   useEffect(() => { setIdeasVivas(ideas) }, [ideas])
 
@@ -215,6 +217,19 @@ export default function AdminPanel({ ideas }: Props) {
       return true
     })
   }, [ideasVivas, catFiltro, madFiltro, busqueda])
+
+  const confirmarEliminar = async () => {
+    if (!ideaAEliminar) return
+    setEliminando(true)
+    try {
+      await fetch(`/api/ideas?id=${ideaAEliminar.id}`, { method: 'DELETE' })
+      setIdeasVivas(prev => prev.filter(i => i.id !== ideaAEliminar.id))
+      setExpandido(null)
+    } finally {
+      setEliminando(false)
+      setIdeaAEliminar(null)
+    }
+  }
 
   const handleExportar = async () => {
     setExportando(true)
@@ -458,6 +473,17 @@ export default function AdminPanel({ ideas }: Props) {
                       </div>
                     )}
 
+                    {/* Botón eliminar */}
+                    <div className="border-t border-sym-bord/60 pt-5 flex justify-end">
+                      <button
+                        onClick={() => setIdeaAEliminar(idea)}
+                        className="flex items-center gap-2 text-xs text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-red-800/40 px-3 py-2 rounded-xl transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Eliminar idea
+                      </button>
+                    </div>
+
                     {/* Estado de la idea */}
                     <div className="border-t border-sym-bord/60 pt-5">
                       <p className="text-slate-500 text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5">
@@ -490,6 +516,43 @@ export default function AdminPanel({ ideas }: Props) {
           </div>
         )}
       </main>
+
+      {/* Modal de confirmación de eliminación */}
+      {ideaAEliminar && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIdeaAEliminar(null)} />
+          <div className="relative bg-sym-card border border-red-800/50 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-semibold">Eliminar idea</h3>
+                <p className="text-slate-400 text-sm">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            <p className="text-slate-300 text-sm bg-sym-surf/50 rounded-xl p-4 border border-sym-bord/60">
+              ¿Seguro que quieres eliminar <strong className="text-white">"{ideaAEliminar.titulo}"</strong>? Se borrarán también todos sus comentarios.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setIdeaAEliminar(null)}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white border border-sym-bord rounded-xl hover:bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarEliminar}
+                disabled={eliminando}
+                className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

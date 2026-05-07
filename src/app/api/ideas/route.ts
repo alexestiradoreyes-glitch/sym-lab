@@ -10,6 +10,7 @@ import fs                            from 'fs'
 import { guardarIdea }               from '@/lib/excel'
 import { enviarEmailIdea }           from '@/lib/email'
 import { enviarPush }                from '@/lib/push'
+import { supabase }                  from '@/lib/supabase'
 import type { Idea }                 from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -146,4 +147,24 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
+
+  const { error } = await supabase.from('ideas').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await supabase.from('idea_states').delete().eq('idea_id', id)
+
+  await enviarPush({
+    tipo: 'estado',
+    titulo: '🗑️ Idea eliminada',
+    mensaje: 'Una idea ha sido eliminada desde Administración',
+    persona: 'Administración',
+    url: '/admin',
+  }).catch(() => {})
+
+  return NextResponse.json({ ok: true })
 }
