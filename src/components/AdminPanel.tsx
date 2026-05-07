@@ -166,30 +166,41 @@ export default function AdminPanel({ ideas }: Props) {
   const [expandido,  setExpandido]  = useState<string | null>(null)
   const [exportando, setExportando] = useState(false)
   const [estados,    setEstados]    = useState<Record<string, EstadoIdea>>({})
+  const [ideasVivas, setIdeasVivas] = useState<Idea[]>(ideas)
+
+  useEffect(() => { setIdeasVivas(ideas) }, [ideas])
 
   useEffect(() => {
     fetch('/api/ideas/estado').then(r => r.ok ? r.json() : {}).then(setEstados).catch(() => {})
   }, [])
 
   const cambiarEstado = async (idea: Idea, nuevoEstado: EstadoIdea) => {
+    if (nuevoEstado === 'Descartada') {
+      if (!confirm(`¿Eliminar la idea "${idea.titulo}"? Esta acción no se puede deshacer.`)) return
+    }
     setEstados(prev => ({ ...prev, [idea.id]: nuevoEstado }))
-    await fetch('/api/ideas/estado', {
+    const res = await fetch('/api/ideas/estado', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ideaId: idea.id, tituloIdea: idea.titulo, estado: nuevoEstado, persona: 'Administración' }),
     })
+    const data = await res.json()
+    if (data.eliminada) {
+      setIdeasVivas(prev => prev.filter(i => i.id !== idea.id))
+      setExpandido(null)
+    }
   }
 
   const stats = useMemo(() => {
     const porMadurez: Record<string, number> = {}
-    ideas.forEach(i => {
+    ideasVivas.forEach(i => {
       porMadurez[i.nivelMadurez] = (porMadurez[i.nivelMadurez] || 0) + 1
     })
-    return { total: ideas.length, porMadurez }
-  }, [ideas])
+    return { total: ideasVivas.length, porMadurez }
+  }, [ideasVivas])
 
   const ideasFiltradas = useMemo(() => {
-    return ideas.filter(i => {
+    return ideasVivas.filter(i => {
       if (catFiltro !== 'todas' && i.categoria    !== catFiltro) return false
       if (madFiltro !== 'todos' && i.nivelMadurez !== madFiltro) return false
       if (busqueda) {
@@ -203,7 +214,7 @@ export default function AdminPanel({ ideas }: Props) {
       }
       return true
     })
-  }, [ideas, catFiltro, madFiltro, busqueda])
+  }, [ideasVivas, catFiltro, madFiltro, busqueda])
 
   const handleExportar = async () => {
     setExportando(true)

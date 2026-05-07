@@ -21,6 +21,19 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'ideaId y estado son obligatorios' }, { status: 400 })
     }
 
+    if (estado === 'Descartada') {
+      await supabase.from('ideas').delete().eq('id', ideaId)
+      await supabase.from('idea_states').delete().eq('idea_id', ideaId)
+      await enviarPush({
+        tipo: 'estado',
+        titulo: '🗑️ Idea descartada',
+        mensaje: `"${tituloIdea}" ha sido eliminada`,
+        persona: persona || 'Administración',
+        url: '/admin',
+      })
+      return NextResponse.json({ ok: true, eliminada: true })
+    }
+
     await supabase.from('idea_states').upsert(
       { idea_id: ideaId, estado },
       { onConflict: 'idea_id' }
@@ -28,7 +41,7 @@ export async function PATCH(req: NextRequest) {
 
     await enviarPush({
       tipo: 'estado',
-      titulo: 'Estado de idea actualizado',
+      titulo: '🔄 Estado actualizado',
       mensaje: `"${tituloIdea}" → ${estado}`,
       persona: persona || 'Administración',
       url: '/admin',
