@@ -31,7 +31,6 @@ export async function guardarComentario(comentario: Comentario): Promise<void> {
     texto: comentario.texto || null,
     rol: comentario.rol,
     fecha_hora: comentario.fechaHora,
-    audio_url: comentario.audioUrl || null,
   })
   if (error) throw new Error(error.message)
 }

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!categoria)                    errores.push('categoria')
     if (!nivelMadurez)                 errores.push('nivelMadurez')
     if (!consentimiento)               errores.push('consentimiento')
-    if (!descripcion && !audioUrl)     errores.push('descripción o audio explicativo')
+    if (!descripcion)                   errores.push('descripción')
 
     if (errores.length > 0) {
       return NextResponse.json(

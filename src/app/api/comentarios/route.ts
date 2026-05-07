@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { ideaId, nombre, texto, rol, audioUrl } = body
+    const { ideaId, nombre, texto, rol } = body
 
     if (!ideaId || !nombre?.trim()) {
       return NextResponse.json({ error: 'ideaId y nombre son obligatorios' }, { status: 400 })
     }
-    if (!texto?.trim() && !audioUrl) {
-      return NextResponse.json({ error: 'Escribe un comentario o adjunta un audio' }, { status: 400 })
+    if (!texto?.trim()) {
+      return NextResponse.json({ error: 'El comentario no puede estar vacío' }, { status: 400 })
     }
 
     const rolesValidos: RolComentario[] = ['Autor', 'Revisor', 'Administrador', 'Colaborador']
@@ -40,22 +40,17 @@ export async function POST(request: NextRequest) {
       id: uuidv4(),
       ideaId,
       nombre: nombre.trim(),
-      texto: texto?.trim() || '',
+      texto: texto.trim(),
       rol: rolFinal,
       fechaHora,
-      audioUrl: audioUrl || undefined,
     }
 
     await guardarComentario(comentario)
 
-    const notifMensaje = audioUrl && !texto?.trim()
-      ? '🎙️ Audio explicativo adjunto'
-      : (texto?.trim() || '').slice(0, 80)
-
     enviarPush({
       tipo: 'comentario',
-      titulo: audioUrl ? '🎙️ Nuevo comentario con audio' : '💬 Nuevo comentario',
-      mensaje: notifMensaje,
+      titulo: '💬 Nuevo comentario',
+      mensaje: texto.trim().slice(0, 80),
       persona: nombre.trim(),
       url: '/admin',
     }).catch(() => {})

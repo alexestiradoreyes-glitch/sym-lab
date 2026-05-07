@@ -7,10 +7,8 @@ import {
   Download, Search, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText, X,
-  MessageSquare, Send, Link2, RefreshCw, Trash2, Mic,
+  MessageSquare, Send, Link2, RefreshCw, Trash2,
 } from 'lucide-react'
-import AudioRecorder from './AudioRecorder'
-import AudioPlayer   from './AudioPlayer'
 import { Idea, CATEGORIAS, NIVELES_MADUREZ, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea } from '@/lib/types'
 
@@ -34,8 +32,6 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
   const [rol,           setRol]           = useState<RolComentario>('Colaborador')
   const [enviando,      setEnviando]      = useState(false)
   const [error,         setError]         = useState<string | null>(null)
-  const [audioBlob,  setAudioBlob]  = useState<Blob | null>(null)
-  const [, setAudioDuracion]        = useState(0)
 
   const cargarComentarios = useCallback(async () => {
     setCargando(true)
@@ -54,34 +50,18 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
       setError('El nombre es obligatorio.')
       return
     }
-    if (!texto.trim() && !audioBlob) {
-      setError('Escribe un comentario o graba un audio.')
+    if (!texto.trim()) {
+      setError('Escribe un comentario.')
       return
     }
     setError(null)
     setEnviando(true)
 
     try {
-      // Upload audio if present
-      let audioUrl: string | undefined
-      if (audioBlob) {
-        const afd = new FormData()
-        afd.append('audio', audioBlob, 'comentario.webm')
-        afd.append('contexto', 'comentarios')
-        const ares = await fetch('/api/audio/upload', { method: 'POST', body: afd })
-        if (!ares.ok) {
-          setError('Error al subir el audio. Inténtalo de nuevo.')
-          setEnviando(false)
-          return
-        }
-        const { url } = await ares.json()
-        audioUrl = url
-      }
-
       const res = await fetch('/api/comentarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ideaId, nombre, texto, rol, audioUrl }),
+        body: JSON.stringify({ ideaId, nombre, texto, rol }),
       })
       if (res.ok) {
         const nuevo = await res.json()
@@ -89,10 +69,9 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
         setNombre('')
         setTexto('')
         setRol('Colaborador')
-        setAudioBlob(null)
-        setAudioDuracion(0)
       } else {
-        setError('Error al guardar el comentario.')
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Error al guardar el comentario.')
       }
     } catch {
       setError('Error de conexión.')
@@ -130,18 +109,10 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${ROL_COLORES[c.rol]}`}>
                   {c.rol}
                 </span>
-                {c.audioUrl && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-sym-red/10 text-red-400 border border-red-800/30 flex items-center gap-1">
-                    <Mic className="w-2.5 h-2.5" /> Audio
-                  </span>
-                )}
                 <span className="text-slate-600 text-xs ml-auto">{c.fechaHora}</span>
               </div>
               {c.texto && (
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-3">{c.texto}</p>
-              )}
-              {c.audioUrl && (
-                <AudioPlayer url={c.audioUrl} />
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{c.texto}</p>
               )}
             </div>
           ))}
@@ -174,23 +145,10 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
         <textarea
           value={texto}
           onChange={e => setTexto(e.target.value)}
-          placeholder="Escribe tu comentario... (opcional si adjuntas audio)"
+          placeholder="Escribe tu comentario..."
           rows={3}
           className="input-field text-sm resize-y"
         />
-
-        {/* Audio del comentario */}
-        <div>
-          <p className="text-slate-500 text-xs mb-2 flex items-center gap-1.5">
-            <Mic className="w-3 h-3" />
-            Audio del comentario <span className="text-slate-600">(opcional)</span>
-          </p>
-          <AudioRecorder
-            onAudioChange={(blob, dur) => { setAudioBlob(blob); setAudioDuracion(dur) }}
-            maxSegundos={180}
-            disabled={enviando}
-          />
-        </div>
 
         {error && (
           <p className="text-red-400 text-xs">{error}</p>
@@ -628,17 +586,6 @@ export default function AdminPanel({ ideas }: Props) {
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Audio de la idea */}
-                    {idea.audioUrl && (
-                      <div>
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                          <Mic className="w-3 h-3" />
-                          Audio de la idea
-                        </p>
-                        <AudioPlayer url={idea.audioUrl} duracion={idea.audioDuracion} />
                       </div>
                     )}
 
