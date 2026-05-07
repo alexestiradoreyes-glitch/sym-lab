@@ -51,15 +51,13 @@ export async function POST(request: NextRequest) {
 
     // ── Validación básica de campos obligatorios ──
     const errores: string[] = []
-    if (!nombre)              errores.push('nombre')
-    if (!email)               errores.push('email')
-    if (!titulo)              errores.push('titulo')
-    if (!categoria)           errores.push('categoria')
-    if (!descripcion)         errores.push('descripcion')
-    if (!problemaResuelve)    errores.push('problemaResuelve')
-    if (!beneficiosEsperados) errores.push('beneficiosEsperados')
-    if (!nivelMadurez)        errores.push('nivelMadurez')
-    if (!consentimiento)      errores.push('consentimiento')
+    if (!nombre)                       errores.push('nombre')
+    if (!email)                        errores.push('email')
+    if (!titulo)                       errores.push('titulo')
+    if (!categoria)                    errores.push('categoria')
+    if (!nivelMadurez)                 errores.push('nivelMadurez')
+    if (!consentimiento)               errores.push('consentimiento')
+    if (!descripcion && !audioUrl)     errores.push('descripción o audio explicativo')
 
     if (errores.length > 0) {
       return NextResponse.json(
@@ -103,9 +101,9 @@ export async function POST(request: NextRequest) {
       telefono:            telefono    || undefined,
       titulo,
       categoria:           categoria   as Idea['categoria'],
-      descripcion,
-      problemaResuelve,
-      beneficiosEsperados,
+      descripcion:         descripcion         || undefined,
+      problemaResuelve:    problemaResuelve    || undefined,
+      beneficiosEsperados: beneficiosEsperados || undefined,
       nivelMadurez:        nivelMadurez as Idea['nivelMadurez'],
       archivos:            archivosGuardados.length > 0 ? archivosGuardados : undefined,
       enlacesReferencia:   enlacesReferencia || undefined,

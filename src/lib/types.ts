@@ -69,9 +69,9 @@ export interface Idea {
   telefono?: string
   titulo: string
   categoria: CategoriaIdea
-  descripcion: string
-  problemaResuelve: string
-  beneficiosEsperados: string
+  descripcion?: string
+  problemaResuelve?: string
+  beneficiosEsperados?: string
   nivelMadurez: NivelMadurez
   archivos?: string[]
   enlacesReferencia?: string

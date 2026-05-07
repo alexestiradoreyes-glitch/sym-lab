@@ -316,7 +316,7 @@ export default function AdminPanel({ ideas }: Props) {
           i.nombre.toLowerCase().includes(q)      ||
           i.titulo.toLowerCase().includes(q)      ||
           i.email.toLowerCase().includes(q)       ||
-          i.descripcion.toLowerCase().includes(q)
+          (i.descripcion ?? '').toLowerCase().includes(q)
         )
       }
       return true
@@ -531,17 +531,32 @@ export default function AdminPanel({ ideas }: Props) {
                       </div>
                     </div>
 
-                    {/* Textos principales */}
-                    {[
-                      { label: 'Descripción completa',  valor: idea.descripcion,         color: 'border-sym-red' },
-                      { label: 'Problema que resuelve', valor: idea.problemaResuelve,     color: 'border-blue-600' },
-                      { label: 'Beneficios esperados',  valor: idea.beneficiosEsperados,  color: 'border-green-600' },
-                    ].map(({ label, valor, color }) => (
-                      <div key={label} className={`border-l-4 ${color} pl-4 py-1`}>
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">{label}</p>
-                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{valor}</p>
+                    {/* Descripción / solo audio */}
+                    {idea.descripcion?.trim() ? (
+                      <div className="border-l-4 border-sym-red pl-4 py-1">
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Descripción completa</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{idea.descripcion}</p>
                       </div>
-                    ))}
+                    ) : idea.audioUrl ? (
+                      <div className="border-l-4 border-sym-red pl-4 py-1">
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Descripción completa</p>
+                        <p className="text-slate-500 text-sm italic">Idea enviada mediante audio explicativo.</p>
+                      </div>
+                    ) : null}
+
+                    {idea.problemaResuelve?.trim() && (
+                      <div className="border-l-4 border-blue-600 pl-4 py-1">
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Problema que resuelve</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{idea.problemaResuelve}</p>
+                      </div>
+                    )}
+
+                    {idea.beneficiosEsperados?.trim() && (
+                      <div className="border-l-4 border-green-600 pl-4 py-1">
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Beneficios esperados</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{idea.beneficiosEsperados}</p>
+                      </div>
+                    )}
 
                     {/* Enlaces de referencia */}
                     {idea.enlacesReferencia && (

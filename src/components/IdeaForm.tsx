@@ -22,9 +22,9 @@ const schema = z.object({
   categoria:           z.enum(['Innovación', 'Investigación', 'Desarrollo', 'Mejora de proceso', 'Sostenibilidad', 'Inteligencia artificial', 'Otro'], {
     required_error: 'Selecciona una categoría',
   }),
-  descripcion:         z.string().min(50, 'Describe tu idea con al menos 50 caracteres').max(5000),
-  problemaResuelve:    z.string().min(20, 'Mínimo 20 caracteres').max(2000),
-  beneficiosEsperados: z.string().min(20, 'Mínimo 20 caracteres').max(2000),
+  descripcion:         z.string().max(5000).optional(),
+  problemaResuelve:    z.string().max(2000).optional(),
+  beneficiosEsperados: z.string().max(2000).optional(),
   nivelMadurez:        z.enum(['Idea inicial', 'Prototipo', 'Validada parcialmente', 'Lista para desarrollar'], {
     required_error: 'Selecciona el nivel de madurez',
   }),
@@ -126,6 +126,15 @@ export default function IdeaForm() {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
     setSubmitError(null)
+
+    // Require at least description OR audio
+    const hasText  = Boolean(data.descripcion?.trim())
+    const hasAudio = Boolean(audioBlob)
+    if (!hasText && !hasAudio) {
+      setSubmitError('Debes escribir la idea o grabar un audio explicativo.')
+      setIsSubmitting(false)
+      return
+    }
 
     const fd = new FormData()
     ;(Object.keys(data) as (keyof FormValues)[]).forEach(key => {
@@ -271,7 +280,10 @@ export default function IdeaForm() {
           {/* Descripción */}
           <div>
             <label htmlFor="descripcion" className="input-label">
-              Descripción completa de la idea <span className="text-sym-red">*</span>
+              Descripción completa de la idea{' '}
+              <span className="text-slate-600 font-normal">
+                {audioBlob ? '(opcional — has grabado un audio)' : '(opcional si grabas un audio)'}
+              </span>
             </label>
             <textarea
               id="descripcion"
@@ -281,13 +293,8 @@ export default function IdeaForm() {
               {...register('descripcion')}
             />
             <div className="flex justify-between mt-1">
-              {errors.descripcion
-                ? <p className="input-error"><AlertCircle className="w-3 h-3" />{errors.descripcion.message}</p>
-                : <span />
-              }
-              <span className={`text-xs ${descripcion.length < 50 ? 'text-slate-600' : 'text-slate-400'}`}>
-                {descripcion.length} / 5000
-              </span>
+              <span />
+              <span className="text-xs text-slate-600">{descripcion.length} / 5000</span>
             </div>
           </div>
         </div>
@@ -309,7 +316,8 @@ export default function IdeaForm() {
           {/* Problema */}
           <div>
             <label htmlFor="problemaResuelve" className="input-label">
-              Problema que resuelve <span className="text-sym-red">*</span>
+              Problema que resuelve{' '}
+              <span className="text-slate-600 font-normal">(opcional)</span>
             </label>
             <textarea
               id="problemaResuelve"
@@ -318,13 +326,13 @@ export default function IdeaForm() {
               placeholder="¿Qué problema existe actualmente? ¿A quién afecta? ¿Por qué es importante resolverlo?"
               {...register('problemaResuelve')}
             />
-            {errors.problemaResuelve && <p className="input-error"><AlertCircle className="w-3 h-3" />{errors.problemaResuelve.message}</p>}
           </div>
 
           {/* Beneficios */}
           <div>
             <label htmlFor="beneficiosEsperados" className="input-label">
-              Beneficios esperados <span className="text-sym-red">*</span>
+              Beneficios esperados{' '}
+              <span className="text-slate-600 font-normal">(opcional)</span>
             </label>
             <textarea
               id="beneficiosEsperados"
@@ -333,7 +341,6 @@ export default function IdeaForm() {
               placeholder="¿Qué mejoras o beneficios aportaría tu idea? ¿Eficiencia, ahorro, sostenibilidad, calidad...?"
               {...register('beneficiosEsperados')}
             />
-            {errors.beneficiosEsperados && <p className="input-error"><AlertCircle className="w-3 h-3" />{errors.beneficiosEsperados.message}</p>}
           </div>
 
           {/* Nivel de madurez */}

@@ -57,9 +57,9 @@ function generarHtmlEmail(idea: Idea): string {
             ${filaTabla('Nivel de madurez', idea.nivelMadurez)}
           </table>
 
-          ${bloque('Descripción completa', idea.descripcion, '#DC2626')}
-          ${bloque('Problema que resuelve', idea.problemaResuelve, '#3B82F6')}
-          ${bloque('Beneficios esperados', idea.beneficiosEsperados, '#10B981')}
+          ${idea.descripcion ? bloque('Descripción completa', idea.descripcion, '#DC2626') : bloque('Descripción', idea.audioUrl ? '(Idea enviada mediante audio explicativo)' : '—', '#DC2626')}
+          ${idea.problemaResuelve ? bloque('Problema que resuelve', idea.problemaResuelve, '#3B82F6') : ''}
+          ${idea.beneficiosEsperados ? bloque('Beneficios esperados', idea.beneficiosEsperados, '#10B981') : ''}
 
           ${idea.archivos && idea.archivos.length > 0 ? `
           <h2 style="color:#DC2626;font-size:16px;font-weight:700;margin:24px 0 12px;padding-bottom:10px;border-bottom:2px solid #fee2e2;">📎 Archivos adjuntos</h2>
