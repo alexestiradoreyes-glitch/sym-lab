@@ -170,8 +170,16 @@ export default function AdminPanel({ ideas }: Props) {
   const [ideasVivas,     setIdeasVivas]     = useState<Idea[]>(ideas)
   const [ideaAEliminar,  setIdeaAEliminar]  = useState<Idea | null>(null)
   const [eliminando,     setEliminando]     = useState(false)
+  const [cargandoIdeas,  setCargandoIdeas]  = useState(ideas.length === 0)
 
-  useEffect(() => { setIdeasVivas(ideas) }, [ideas])
+  // Fetch client-side on mount so data is always fresh from Supabase
+  useEffect(() => {
+    fetch('/api/ideas')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Idea[]) => { if (data.length > 0) setIdeasVivas(data) })
+      .catch(() => {})
+      .finally(() => setCargandoIdeas(false))
+  }, [])
 
   // Realtime: escucha INSERT y DELETE en la tabla ideas
   const channelRef = useRef<ReturnType<typeof supabasePublic.channel> | null>(null)
@@ -311,7 +319,7 @@ export default function AdminPanel({ ideas }: Props) {
           </div>
           <button
             onClick={handleExportar}
-            disabled={exportando || ideas.length === 0}
+            disabled={exportando || ideasVivas.length === 0}
             className="btn-primary flex items-center gap-2 text-sm py-2 px-3 sm:px-4"
             title="Exportar Excel"
           >
@@ -329,7 +337,7 @@ export default function AdminPanel({ ideas }: Props) {
             { label: 'Total ideas',            valor: stats.total,                                   icon: FileText,  color: 'text-white' },
             { label: 'Idea inicial',            valor: stats.porMadurez['Idea inicial']        ?? 0, icon: TrendingUp, color: 'text-slate-400' },
             { label: 'Lista para desarrollar', valor: stats.porMadurez['Lista para desarrollar'] ?? 0, icon: TrendingUp, color: 'text-green-400' },
-            { label: 'Esta semana',            valor: ideas.filter(i => {
+            { label: 'Esta semana',            valor: ideasVivas.filter(i => {
                 const [dia, mes, resto = ''] = i.fechaEnvio.split('/')
                 const anio = resto.split(' ')[0]
                 const fecha = new Date(+anio, +mes - 1, +dia)
@@ -389,7 +397,12 @@ export default function AdminPanel({ ideas }: Props) {
         </div>
 
         {/* ── Lista de ideas ── */}
-        {ideasFiltradas.length === 0 ? (
+        {cargandoIdeas ? (
+          <div className="card p-16 text-center">
+            <RefreshCw className="w-8 h-8 text-slate-600 mx-auto mb-4 animate-spin" />
+            <p className="text-slate-500">Cargando ideas...</p>
+          </div>
+        ) : ideasFiltradas.length === 0 ? (
           <div className="card p-16 text-center">
             <FileText className="w-12 h-12 text-slate-700 mx-auto mb-4" />
             <p className="text-slate-500">No hay ideas con los filtros seleccionados.</p>

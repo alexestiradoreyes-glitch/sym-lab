@@ -17,6 +17,17 @@ export const runtime = 'nodejs'
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads')
 
+export async function GET() {
+  try {
+    const { leerIdeas } = await import('@/lib/excel')
+    const ideas = await leerIdeas()
+    return NextResponse.json(ideas)
+  } catch (err) {
+    console.error('[SYM LAB] GET /api/ideas error:', err)
+    return NextResponse.json([], { status: 200 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const fd = await request.formData()

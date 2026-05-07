@@ -29,7 +29,10 @@ export async function leerIdeas(): Promise<Idea[]> {
     .select('*')
     .order('created_at', { ascending: false })
 
-  if (error) return []
+  if (error) {
+    console.error('[SYM LAB] leerIdeas error:', error.message)
+    return []
+  }
 
   return (data || []).map(row => ({
     id: row.id,
