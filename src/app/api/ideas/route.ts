@@ -5,8 +5,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 }             from 'uuid'
 import { format }                    from 'date-fns'
 import { es }                        from 'date-fns/locale'
-import path                          from 'path'
-import fs                            from 'fs'
 import { guardarIdea }               from '@/lib/excel'
 import { enviarEmailIdea }           from '@/lib/email'
 import { enviarPush }                from '@/lib/push'
@@ -15,7 +13,7 @@ import type { Idea }                 from '@/lib/types'
 
 export const runtime = 'nodejs'
 
-const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads')
+const BUCKET = 'adjuntos'
 
 export async function GET() {
   try {
@@ -70,24 +68,28 @@ export async function POST(request: NextRequest) {
     const id         = uuidv4()
     const fechaEnvio = format(new Date(), "dd/MM/yyyy HH:mm:ss", { locale: es })
 
-    // ── Archivos adjuntos ──
+    // ── Archivos adjuntos → Supabase Storage ──
     const archivosGuardados: string[] = []
     const archivosRecibidos = fd.getAll('archivos') as File[]
 
     if (archivosRecibidos.length > 0 && archivosRecibidos[0].size > 0) {
-      const carpetaIdea = path.join(UPLOADS_DIR, id)
-      fs.mkdirSync(carpetaIdea, { recursive: true })
-
       for (const archivo of archivosRecibidos) {
         if (!(archivo instanceof File) || archivo.size === 0) continue
 
-        // Nombre seguro: eliminar caracteres no permitidos
-        const nombreSeguro = `${Date.now()}_${archivo.name.replace(/[^a-zA-Z0-9._\-áéíóúüñÁÉÍÓÚÜÑ ]/g, '_')}`
-        const rutaArchivo  = path.join(carpetaIdea, nombreSeguro)
-
+        const nombreSeguro = `${id}/${Date.now()}_${archivo.name.replace(/[^a-zA-Z0-9._\-]/g, '_')}`
         const bytes = await archivo.arrayBuffer()
-        fs.writeFileSync(rutaArchivo, Buffer.from(bytes))
-        archivosGuardados.push(nombreSeguro)
+
+        const { error: uploadError } = await supabase.storage
+          .from(BUCKET)
+          .upload(nombreSeguro, Buffer.from(bytes), {
+            contentType: archivo.type,
+            upsert: false,
+          })
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(nombreSeguro)
+          archivosGuardados.push(urlData.publicUrl)
+        }
       }
     }
 
@@ -157,6 +159,13 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
+
+  // Borrar archivos adjuntos de Supabase Storage
+  const { data: archivos } = await supabase.storage.from(BUCKET).list(id)
+  if (archivos && archivos.length > 0) {
+    const rutas = archivos.map(f => `${id}/${f.name}`)
+    await supabase.storage.from(BUCKET).remove(rutas)
+  }
 
   const { error } = await supabase.from('ideas').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -19,6 +19,15 @@ export async function POST(request: NextRequest) {
     if (!titulo?.trim() || !url?.trim() || !persona?.trim()) {
       return NextResponse.json({ error: 'titulo, url y persona son obligatorios' }, { status: 400 })
     }
+    if (titulo.trim().length > 150) {
+      return NextResponse.json({ error: 'El título no puede superar los 150 caracteres' }, { status: 400 })
+    }
+    if (url.trim().length > 500) {
+      return NextResponse.json({ error: 'La URL no puede superar los 500 caracteres' }, { status: 400 })
+    }
+    if ((descripcion ?? '').length > 300) {
+      return NextResponse.json({ error: 'La descripción no puede superar los 300 caracteres' }, { status: 400 })
+    }
 
     const categoriasValidas: CategoriaEnlace[] = [
       'Proyecto', 'Tecnología', 'Investigación', 'Convocatoria', 'Empresa', 'Artículo', 'Otro',

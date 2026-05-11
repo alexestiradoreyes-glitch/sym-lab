@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
     if (!texto?.trim()) {
       return NextResponse.json({ error: 'El comentario no puede estar vacío' }, { status: 400 })
     }
+    if (texto.trim().length > 1000) {
+      return NextResponse.json({ error: 'El comentario no puede superar los 1000 caracteres' }, { status: 400 })
+    }
 
     const rolesValidos: RolComentario[] = ['Autor', 'Revisor', 'Administrador', 'Colaborador']
     const rolFinal: RolComentario = rolesValidos.includes(rol) ? rol : 'Colaborador'

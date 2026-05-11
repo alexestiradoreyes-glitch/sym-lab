@@ -92,10 +92,11 @@ function FormularioEnlace({ onGuardado }: { onGuardado: (e: Enlace) => void }) {
           <input
             type="text"
             value={titulo}
-            onChange={e => setTitulo(e.target.value)}
+            onChange={e => setTitulo(e.target.value.slice(0, 150))}
             placeholder="Nombre descriptivo del enlace"
             className="input-field"
           />
+          <p className={`text-xs text-right mt-0.5 ${titulo.length >= 150 ? 'text-red-400' : 'text-slate-600'}`}>{titulo.length}/150</p>
         </div>
         <div>
           <label className="input-label">Persona que lo añade <span className="text-sym-red">*</span></label>
@@ -114,21 +115,23 @@ function FormularioEnlace({ onGuardado }: { onGuardado: (e: Enlace) => void }) {
         <input
           type="url"
           value={url}
-          onChange={e => setUrl(e.target.value)}
+          onChange={e => setUrl(e.target.value.slice(0, 500))}
           placeholder="https://..."
           className="input-field"
         />
+        <p className={`text-xs text-right mt-0.5 ${url.length >= 500 ? 'text-red-400' : 'text-slate-600'}`}>{url.length}/500</p>
       </div>
 
       <div>
         <label className="input-label">Descripción breve</label>
         <textarea
           value={descripcion}
-          onChange={e => setDescripcion(e.target.value)}
+          onChange={e => setDescripcion(e.target.value.slice(0, 300))}
           placeholder="¿De qué trata este enlace? ¿Por qué es relevante?"
           rows={2}
           className="input-field resize-none"
         />
+        <p className={`text-xs text-right mt-0.5 ${descripcion.length >= 300 ? 'text-red-400' : 'text-slate-600'}`}>{descripcion.length}/300</p>
       </div>
 
       <div>

@@ -144,11 +144,14 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
 
         <textarea
           value={texto}
-          onChange={e => setTexto(e.target.value)}
+          onChange={e => setTexto(e.target.value.slice(0, 1000))}
           placeholder="Escribe tu comentario..."
           rows={3}
           className="input-field text-sm resize-y"
         />
+        <p className={`text-xs text-right ${texto.length >= 1000 ? 'text-red-400' : 'text-slate-600'}`}>
+          {texto.length} / 1000
+        </p>
 
         {error && (
           <p className="text-red-400 text-xs">{error}</p>
@@ -167,6 +170,8 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
   )
 }
 
+const IDEAS_POR_PAGINA = 20
+
 /* ─── Panel principal ─── */
 export default function AdminPanel({ ideas }: Props) {
   const [busqueda,   setBusqueda]   = useState('')
@@ -181,6 +186,7 @@ export default function AdminPanel({ ideas }: Props) {
   const [eliminarError,  setEliminarError]  = useState<string | null>(null)
   const [cargandoIdeas,  setCargandoIdeas]  = useState(ideas.length === 0)
   const [refreshing,     setRefreshing]     = useState(false)
+  const [pagina,         setPagina]         = useState(1)
 
   // Central refetch — usado por todos los mecanismos de actualización
   const refetchIdeas = useCallback(() => {
@@ -293,6 +299,10 @@ export default function AdminPanel({ ideas }: Props) {
       return true
     })
   }, [ideasVivas, catFiltro, madFiltro, busqueda])
+
+  const totalPaginas  = Math.max(1, Math.ceil(ideasFiltradas.length / IDEAS_POR_PAGINA))
+  const paginaActual  = Math.min(pagina, totalPaginas)
+  const ideasPagina   = ideasFiltradas.slice((paginaActual - 1) * IDEAS_POR_PAGINA, paginaActual * IDEAS_POR_PAGINA)
 
   const confirmarEliminar = async () => {
     if (!ideaAEliminar) return
@@ -410,7 +420,7 @@ export default function AdminPanel({ ideas }: Props) {
               <input
                 type="text"
                 value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
+                onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
                 placeholder="Buscar por nombre, título, email..."
                 className="input-field pl-10"
               />
@@ -423,7 +433,7 @@ export default function AdminPanel({ ideas }: Props) {
 
             <select
               value={catFiltro}
-              onChange={e => setCatFiltro(e.target.value)}
+              onChange={e => { setCatFiltro(e.target.value); setPagina(1) }}
               className="input-field flex-shrink-0 w-auto"
             >
               <option value="todas">Todas las categorías</option>
@@ -432,7 +442,7 @@ export default function AdminPanel({ ideas }: Props) {
 
             <select
               value={madFiltro}
-              onChange={e => setMadFiltro(e.target.value)}
+              onChange={e => { setMadFiltro(e.target.value); setPagina(1) }}
               className="input-field flex-shrink-0 w-auto"
             >
               <option value="todos">Todos los niveles</option>
@@ -442,6 +452,7 @@ export default function AdminPanel({ ideas }: Props) {
 
           <p className="text-slate-600 text-xs mt-3">
             Mostrando <strong className="text-slate-400">{ideasFiltradas.length}</strong> de {stats.total} ideas
+            {totalPaginas > 1 && <span> · página <strong className="text-slate-400">{paginaActual}</strong> de {totalPaginas}</span>}
           </p>
         </div>
 
@@ -458,7 +469,7 @@ export default function AdminPanel({ ideas }: Props) {
           </div>
         ) : (
           <div className="space-y-3">
-            {ideasFiltradas.map(idea => (
+            {ideasPagina.map(idea => (
               <div key={idea.id} className="card overflow-hidden">
 
                 {/* Fila principal */}
@@ -637,6 +648,39 @@ export default function AdminPanel({ ideas }: Props) {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── Paginación ── */}
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <button
+              onClick={() => setPagina(p => Math.max(1, p - 1))}
+              disabled={paginaActual === 1}
+              className="px-3 py-2 rounded-lg border border-sym-bord text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm"
+            >
+              ← Anterior
+            </button>
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(n => (
+              <button
+                key={n}
+                onClick={() => setPagina(n)}
+                className={`w-9 h-9 rounded-lg border text-sm font-medium transition-all ${
+                  n === paginaActual
+                    ? 'bg-sym-red border-sym-red text-white'
+                    : 'border-sym-bord text-slate-400 hover:text-white hover:border-slate-500'
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+              disabled={paginaActual === totalPaginas}
+              className="px-3 py-2 rounded-lg border border-sym-bord text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm"
+            >
+              Siguiente →
+            </button>
           </div>
         )}
       </main>
