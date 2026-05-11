@@ -7,7 +7,7 @@ import {
   Download, Search, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText, X,
-  MessageSquare, Send, Link2, RefreshCw, Trash2,
+  MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft,
 } from 'lucide-react'
 import { Idea, CATEGORIAS, NIVELES_MADUREZ, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea } from '@/lib/types'
@@ -338,6 +338,14 @@ export default function AdminPanel({ ideas }: Props) {
         <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <a
+              href="/"
+              className="flex items-center gap-1 text-slate-400 hover:text-white border border-sym-bord hover:border-slate-500 bg-black/30 hover:bg-white/10 py-2 px-3 rounded-xl transition-all text-sm"
+              title="Volver al inicio"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Inicio</span>
+            </a>
             <Image
               src="/images/logo-symlab.png"
               alt="SYM LAB"
