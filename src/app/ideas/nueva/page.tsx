@@ -32,7 +32,7 @@ export default function PaginaFormulario() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-white" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>Envía tu idea</h1>
-              <p className="text-white/90 text-sm font-medium" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>Cuanta más información, mejor podemos evaluarla</p>
+              <p className="text-white/90 text-sm font-medium" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>Comparte tu idea sin miedo: por pequeña que parezca, puede abrir una gran oportunidad.</p>
             </div>
           </div>
         </div>
