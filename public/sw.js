@@ -1,8 +1,8 @@
 // SYM LAB Service Worker — Cache-first para estáticos, Network-first para API
-const CACHE = 'symlab-v4'
+const CACHE = 'symlab-v5'
 
 // Páginas que nunca deben cachearse (datos en tiempo real)
-const NO_CACHE_PAGES = ['/admin', '/api/']
+const NO_CACHE_PAGES = ['/admin', '/api/', '/ideas/']
 
 const PRECACHE = [
   '/',
