@@ -18,7 +18,7 @@ const schema = z.object({
   email:               z.string().email('Introduce un email válido'),
   telefono:            z.string().max(20).optional(),
   titulo:              z.string().min(5, 'Mínimo 5 caracteres').max(200, 'Máximo 200 caracteres'),
-  categoria:           z.enum(['Innovación', 'Investigación', 'Desarrollo', 'Mejora de proceso', 'Sostenibilidad', 'Inteligencia artificial', 'Otro'], {
+  categoria:           z.enum(['Nuevo proceso', 'Nuevo producto', 'Mejora de producto', 'Mejora de proceso', 'No estoy seguro'], {
     required_error: 'Selecciona una categoría',
   }),
   descripcion:         z.string().min(1, 'La descripción es obligatoria').max(5000, 'Máximo 5000 caracteres'),
@@ -208,7 +208,7 @@ export default function IdeaForm() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Campo nombre="nombre"   label="Nombre y apellidos"      requerido className="sm:col-span-2" />
-          <Campo nombre="empresa"  label="Empresa u organización"  />
+          <Campo nombre="empresa"  label="Departamento"  />
           <Campo nombre="email"    label="Correo electrónico"      requerido />
           <Campo nombre="telefono" label="Teléfono de contacto"    />
         </div>

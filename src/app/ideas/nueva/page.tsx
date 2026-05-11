@@ -24,15 +24,15 @@ export default function PaginaFormulario() {
           height: '200px',
         }}
       >
-        <div className="absolute inset-0 bg-black/68" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-black/40" />
         <div className="relative z-10 h-full flex flex-col justify-end px-4 sm:px-6 pb-8 max-w-3xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sym-red/20 border border-sym-red/30 rounded-xl flex items-center justify-center">
               <FlaskConical className="w-6 h-6 text-sym-red" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white">Envía tu idea</h1>
-              <p className="text-slate-400 text-sm">Cuanta más información, mejor podemos evaluarla</p>
+              <h1 className="text-2xl sm:text-3xl font-black text-white" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>Envía tu idea</h1>
+              <p className="text-white/90 text-sm font-medium" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>Cuanta más información, mejor podemos evaluarla</p>
             </div>
           </div>
         </div>

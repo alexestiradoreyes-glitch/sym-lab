@@ -35,13 +35,11 @@ export interface Notificacion {
 }
 
 export type CategoriaIdea =
-  | 'Innovación'
-  | 'Investigación'
-  | 'Desarrollo'
+  | 'Nuevo proceso'
+  | 'Nuevo producto'
+  | 'Mejora de producto'
   | 'Mejora de proceso'
-  | 'Sostenibilidad'
-  | 'Inteligencia artificial'
-  | 'Otro'
+  | 'No estoy seguro'
 
 export type NivelMadurez =
   | 'Idea inicial'
@@ -118,13 +116,11 @@ export const ROLES_COMENTARIO: RolComentario[] = [
 ]
 
 export const CATEGORIAS: CategoriaIdea[] = [
-  'Innovación',
-  'Investigación',
-  'Desarrollo',
+  'Nuevo proceso',
+  'Nuevo producto',
+  'Mejora de producto',
   'Mejora de proceso',
-  'Sostenibilidad',
-  'Inteligencia artificial',
-  'Otro',
+  'No estoy seguro',
 ]
 
 export const NIVELES_MADUREZ: NivelMadurez[] = [
@@ -136,13 +132,11 @@ export const NIVELES_MADUREZ: NivelMadurez[] = [
 
 // Colores de badge por categoría
 export const CATEGORIA_COLORES: Record<CategoriaIdea, string> = {
-  'Innovación':              'bg-purple-900/50 text-purple-300 border border-purple-700/50',
-  'Investigación':           'bg-blue-900/50 text-blue-300 border border-blue-700/50',
-  'Desarrollo':              'bg-cyan-900/50 text-cyan-300 border border-cyan-700/50',
-  'Mejora de proceso':       'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50',
-  'Sostenibilidad':          'bg-green-900/50 text-green-300 border border-green-700/50',
-  'Inteligencia artificial': 'bg-red-900/50 text-red-300 border border-red-700/50',
-  'Otro':                    'bg-slate-800/50 text-slate-300 border border-slate-600/50',
+  'Nuevo proceso':    'bg-blue-900/50 text-blue-300 border border-blue-700/50',
+  'Nuevo producto':   'bg-purple-900/50 text-purple-300 border border-purple-700/50',
+  'Mejora de producto': 'bg-cyan-900/50 text-cyan-300 border border-cyan-700/50',
+  'Mejora de proceso':  'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50',
+  'No estoy seguro':  'bg-slate-800/50 text-slate-300 border border-slate-600/50',
 }
 
 export const MADUREZ_COLORES: Record<NivelMadurez, string> = {
