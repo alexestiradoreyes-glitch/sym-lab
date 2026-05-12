@@ -219,3 +219,11 @@ export const FRECUENCIA_COLORES: Record<FrecuenciaProblema, string> = {
   'Muy frecuente': 'bg-orange-900/50 text-orange-300',
   'Constante':     'bg-red-900/50 text-red-300',
 }
+
+export interface ProblemasSolucion {
+  id: string
+  problemaId: string
+  nombre: string
+  solucion: string
+  fechaHora: string
+}

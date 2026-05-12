@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Problema, EstadoProblema } from './types'
+import type { Problema, EstadoProblema, ProblemasSolucion } from './types'
 
 const BUCKET = 'adjuntos'
 
@@ -60,6 +60,35 @@ export async function leerProblemas(): Promise<Problema[]> {
     proximosPasos:       row.proximos_pasos || undefined,
     responsable:         row.responsable || undefined,
     fechaEstimada:       row.fecha_estimada || undefined,
+  }))
+}
+
+export async function guardarSolucion(s: ProblemasSolucion): Promise<void> {
+  const { error } = await supabase.from('problema_soluciones').insert({
+    id:          s.id,
+    problema_id: s.problemaId,
+    nombre:      s.nombre,
+    solucion:    s.solucion,
+    fecha_hora:  s.fechaHora,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function leerSoluciones(problemaId: string): Promise<ProblemasSolucion[]> {
+  const { data, error } = await supabase
+    .from('problema_soluciones')
+    .select('*')
+    .eq('problema_id', problemaId)
+    .order('created_at', { ascending: true })
+
+  if (error) return []
+
+  return (data || []).map(row => ({
+    id:         row.id,
+    problemaId: row.problema_id,
+    nombre:     row.nombre,
+    solucion:   row.solucion,
+    fechaHora:  row.fecha_hora,
   }))
 }
 

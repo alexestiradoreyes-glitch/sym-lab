@@ -7,7 +7,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Upload, X, FileText, ImageIcon, AlertCircle,
-  Loader2, ChevronRight, File as FileIcon,
+  Loader2, ChevronRight, File as FileIcon, CheckCircle2,
 } from 'lucide-react'
 import {
   FRECUENCIAS_PROBLEMA, IMPACTOS_PROBLEMA, AREAS_PROBLEMA,
@@ -60,12 +60,17 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function ProblemaForm() {
+interface ProblemaFormProps {
+  onSuccess?: () => void
+}
+
+export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
   const [archivos, setArchivos]         = useState<File[]>([])
   const [archivoError, setArchivoError] = useState<string | null>(null)
   const [dragOver, setDragOver]         = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError]   = useState<string | null>(null)
+  const [enviado, setEnviado]           = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const router   = useRouter()
 
@@ -113,7 +118,12 @@ export default function ProblemaForm() {
       const res  = await fetch('/api/problemas', { method: 'POST', body: fd })
       const json = await res.json()
       if (res.ok) {
-        router.push(`/problemas/gracias?id=${json.id}`)
+        if (onSuccess) {
+          setEnviado(true)
+          setTimeout(() => { setEnviado(false); onSuccess() }, 2000)
+        } else {
+          router.push(`/problemas/gracias?id=${json.id}`)
+        }
       } else {
         setSubmitError(json.error || 'Error al enviar. Inténtalo de nuevo.')
       }
@@ -122,6 +132,16 @@ export default function ProblemaForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (enviado) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+        <CheckCircle2 className="w-14 h-14 text-green-400" />
+        <p className="text-white font-bold text-xl">¡Problema enviado correctamente!</p>
+        <p className="text-slate-400 text-sm">Redirigiendo al registro...</p>
+      </div>
+    )
   }
 
   return (
