@@ -207,17 +207,20 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
 
   // Realtime Supabase — funciona si está habilitado en el dashboard
   useEffect(() => {
-    const channel = supabasePublic
-      .channel('ideas-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ideas' }, () => {
-        refetchIdeas()
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ideas' }, (payload) => {
-        const id = (payload.old as Record<string, unknown>).id as string
-        setIdeasVivas(prev => prev.filter(i => i.id !== id))
-      })
-      .subscribe()
-    return () => { supabasePublic.removeChannel(channel) }
+    let channel: ReturnType<typeof supabasePublic.channel> | null = null
+    try {
+      channel = supabasePublic
+        .channel('ideas-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ideas' }, () => {
+          refetchIdeas()
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ideas' }, (payload) => {
+          const id = (payload.old as Record<string, unknown>).id as string
+          setIdeasVivas(prev => prev.filter(i => i.id !== id))
+        })
+        .subscribe()
+    } catch { /* WebSocket no disponible en este entorno */ }
+    return () => { if (channel) { try { supabasePublic.removeChannel(channel) } catch { /* ignore */ } } }
   }, [refetchIdeas])
 
   // BroadcastChannel — sincronización instantánea en el mismo navegador
@@ -260,7 +263,9 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
 
   const cambiarEstado = async (idea: Idea, nuevoEstado: EstadoIdea) => {
     if (nuevoEstado === 'Descartada') {
-      if (!confirm(`¿Eliminar la idea "${idea.titulo}"? Esta acción no se puede deshacer.`)) return
+      let confirmado = true
+      try { confirmado = window.confirm(`¿Eliminar la idea "${idea.titulo}"? Esta acción no se puede deshacer.`) } catch { /* PWA/iOS sin confirm */ }
+      if (!confirmado) return
     }
     setEstados(prev => ({ ...prev, [idea.id]: nuevoEstado }))
     const res = await fetch('/api/ideas/estado', {
@@ -411,11 +416,13 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
             { label: 'Idea inicial',            valor: stats.porMadurez['Idea inicial']        ?? 0, icon: TrendingUp, color: 'text-slate-400' },
             { label: 'Lista para desarrollar', valor: stats.porMadurez['Lista para desarrollar'] ?? 0, icon: TrendingUp, color: 'text-green-400' },
             { label: 'Esta semana',            valor: ideasVivas.filter(i => {
-                const [dia, mes, resto = ''] = i.fechaEnvio.split('/')
-                const anio = resto.split(' ')[0]
-                const fecha = new Date(+anio, +mes - 1, +dia)
-                const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7)
-                return fecha > hace7
+                try {
+                  const [dia, mes, resto = ''] = (i.fechaEnvio ?? '').split('/')
+                  const anio = resto.split(' ')[0]
+                  const fecha = new Date(+anio, +mes - 1, +dia)
+                  const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7)
+                  return fecha > hace7
+                } catch { return false }
               }).length, icon: Calendar, color: 'text-blue-400' },
           ].map(({ label, valor, icon: Icon, color }) => (
             <div key={label} className="card p-5">
