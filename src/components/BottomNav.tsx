@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Lightbulb, Link2, Settings } from 'lucide-react'
+import { Home, Lightbulb, Link2, Settings, AlertTriangle } from 'lucide-react'
 
 const NAV = [
-  { href: '/',           label: 'Inicio',    Icon: Home },
-  { href: '/ideas/nueva',label: 'Nueva idea', Icon: Lightbulb },
-  { href: '/enlaces',    label: 'Enlaces',   Icon: Link2 },
-  { href: '/admin',      label: 'Admin',     Icon: Settings },
+  { href: '/',                 label: 'Inicio',     Icon: Home },
+  { href: '/ideas/nueva',      label: 'Idea',       Icon: Lightbulb },
+  { href: '/problemas/nueva',  label: 'Problema',   Icon: AlertTriangle },
+  { href: '/enlaces',          label: 'Enlaces',    Icon: Link2 },
+  { href: '/admin',            label: 'Admin',      Icon: Settings },
 ]
 
 export default function BottomNav() {

@@ -45,6 +45,9 @@ export default function Header({ minimalista = false }: HeaderProps) {
               <Link href="/ideas/nueva" className={`text-sm font-medium transition-colors ${enlaceActivo('/ideas/nueva')}`}>
                 Enviar idea
               </Link>
+              <Link href="/problemas/nueva" className={`text-sm font-medium transition-colors ${enlaceActivo('/problemas/nueva')}`}>
+                Problema no resuelto
+              </Link>
               <Link href="/enlaces" className={`text-sm font-medium transition-colors ${enlaceActivo('/enlaces')}`}>
                 Enlaces
               </Link>
@@ -94,6 +97,9 @@ export default function Header({ minimalista = false }: HeaderProps) {
             </Link>
             <Link href="/ideas/nueva" className="text-sm font-medium text-slate-300" onClick={() => setMenuAbierto(false)}>
               Enviar idea
+            </Link>
+            <Link href="/problemas/nueva" className="text-sm font-medium text-slate-300" onClick={() => setMenuAbierto(false)}>
+              Problema no resuelto
             </Link>
             <Link href="/enlaces" className="text-sm font-medium text-slate-300" onClick={() => setMenuAbierto(false)}>
               Enlaces

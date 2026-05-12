@@ -158,3 +158,64 @@ export const MADUREZ_COLORES: Record<NivelMadurez, string> = {
   'Validada parcialmente': 'bg-blue-900/60 text-blue-400',
   'Lista para desarrollar':'bg-green-900/60 text-green-400',
 }
+
+// ─── Tipos para Problemas no resueltos ───────────────────────────────────────
+
+export type FrecuenciaProblema = 'Puntual' | 'Frecuente' | 'Muy frecuente' | 'Constante'
+export type ImpactoProblema    = 'Bajo' | 'Medio' | 'Alto' | 'Crítico'
+export type AreaProblema       = 'Operaciones' | 'Clientes' | 'Producto' | 'Equipo' | 'Administración' | 'Tecnología' | 'Otra'
+export type EstadoProblema     = 'Nuevo' | 'En revisión' | 'En análisis' | 'Solución propuesta' | 'En desarrollo' | 'Resuelto' | 'Rechazado'
+
+export interface Problema {
+  id: string
+  fechaEnvio: string
+  nombre: string
+  email: string
+  empresa?: string
+  titulo: string
+  descripcion: string
+  contexto?: string
+  frecuencia: FrecuenciaProblema
+  impacto: ImpactoProblema
+  area: AreaProblema
+  archivos?: string[]
+  enlacesReferencia?: string
+  solucionPropuesta?: string
+  beneficioEsperado?: string
+  recursosNecesarios?: string
+  estado?: EstadoProblema
+  respuestaEquipo?: string
+  solucionOficial?: string
+  proximosPasos?: string
+  responsable?: string
+  fechaEstimada?: string
+}
+
+export const FRECUENCIAS_PROBLEMA: FrecuenciaProblema[] = ['Puntual', 'Frecuente', 'Muy frecuente', 'Constante']
+export const IMPACTOS_PROBLEMA:    ImpactoProblema[]    = ['Bajo', 'Medio', 'Alto', 'Crítico']
+export const AREAS_PROBLEMA:       AreaProblema[]       = ['Operaciones', 'Clientes', 'Producto', 'Equipo', 'Administración', 'Tecnología', 'Otra']
+export const ESTADOS_PROBLEMA:     EstadoProblema[]     = ['Nuevo', 'En revisión', 'En análisis', 'Solución propuesta', 'En desarrollo', 'Resuelto', 'Rechazado']
+
+export const IMPACTO_COLORES: Record<ImpactoProblema, string> = {
+  'Bajo':     'bg-slate-800 text-slate-400',
+  'Medio':    'bg-yellow-900/50 text-yellow-300',
+  'Alto':     'bg-orange-900/50 text-orange-300',
+  'Crítico':  'bg-red-900/50 text-red-300',
+}
+
+export const ESTADO_PROBLEMA_COLORES: Record<EstadoProblema, string> = {
+  'Nuevo':               'bg-slate-800 text-slate-300',
+  'En revisión':         'bg-yellow-900/50 text-yellow-300',
+  'En análisis':         'bg-blue-900/50 text-blue-300',
+  'Solución propuesta':  'bg-purple-900/50 text-purple-300',
+  'En desarrollo':       'bg-cyan-900/50 text-cyan-300',
+  'Resuelto':            'bg-green-900/50 text-green-300',
+  'Rechazado':           'bg-red-900/40 text-red-400',
+}
+
+export const FRECUENCIA_COLORES: Record<FrecuenciaProblema, string> = {
+  'Puntual':       'bg-slate-800 text-slate-400',
+  'Frecuente':     'bg-yellow-900/50 text-yellow-300',
+  'Muy frecuente': 'bg-orange-900/50 text-orange-300',
+  'Constante':     'bg-red-900/50 text-red-300',
+}

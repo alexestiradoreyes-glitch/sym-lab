@@ -7,10 +7,11 @@ import {
   Download, Search, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText, X,
-  MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft,
+  MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft, AlertTriangle, Lightbulb,
 } from 'lucide-react'
 import { Idea, CATEGORIAS, NIVELES_MADUREZ, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
-import type { Comentario, RolComentario, EstadoIdea } from '@/lib/types'
+import type { Comentario, RolComentario, EstadoIdea, Problema } from '@/lib/types'
+import ProblemasAdminSection from './ProblemasAdminSection'
 
 const ROL_COLORES: Record<RolComentario, string> = {
   'Autor':          'bg-sym-red/20 text-red-300 border-red-800/40',
@@ -21,6 +22,7 @@ const ROL_COLORES: Record<RolComentario, string> = {
 
 interface Props {
   ideas: Idea[]
+  problemas?: Problema[]
 }
 
 /* ─── Sub-componente de comentarios por idea ─── */
@@ -173,7 +175,8 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
 const IDEAS_POR_PAGINA = 20
 
 /* ─── Panel principal ─── */
-export default function AdminPanel({ ideas }: Props) {
+export default function AdminPanel({ ideas, problemas = [] }: Props) {
+  const [tabActivo, setTabActivo] = useState<'ideas' | 'problemas'>('ideas')
   const [busqueda,   setBusqueda]   = useState('')
   const [catFiltro,  setCatFiltro]  = useState('todas')
   const [madFiltro,  setMadFiltro]  = useState('todos')
@@ -388,7 +391,36 @@ export default function AdminPanel({ ideas }: Props) {
         </div>
       </header>
 
+      {/* ── Selector de pestañas ── */}
+      <div className="border-b border-sym-bord bg-sym-dark/60 sticky top-[65px] z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 pt-2">
+          {([
+            { key: 'ideas',     label: 'Ideas',                Icon: Lightbulb },
+            { key: 'problemas', label: 'Problemas no resueltos', Icon: AlertTriangle },
+          ] as const).map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTabActivo(key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-all ${
+                tabActivo === key
+                  ? 'text-white border-sym-red'
+                  : 'text-slate-500 border-transparent hover:text-slate-300'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 space-y-8">
+
+      {tabActivo === 'problemas' && (
+        <ProblemasAdminSection problemas={problemas} />
+      )}
+
+      {tabActivo === 'ideas' && (<>
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -713,6 +745,7 @@ export default function AdminPanel({ ideas }: Props) {
             </button>
           </div>
         )}
+      </>)}
       </main>
 
       {/* Modal de confirmación de eliminación */}

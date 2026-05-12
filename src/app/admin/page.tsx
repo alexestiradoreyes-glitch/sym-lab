@@ -1,6 +1,8 @@
-import { leerIdeas } from '@/lib/excel'
-import AdminPanel from '@/components/AdminPanel'
-import type { Idea } from '@/lib/types'
+import { leerIdeas }     from '@/lib/excel'
+import { leerProblemas } from '@/lib/problemas'
+import AdminPanel        from '@/components/AdminPanel'
+import type { Idea }     from '@/lib/types'
+import type { Problema } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,12 +11,11 @@ export const metadata = {
 }
 
 export default async function PaginaAdmin() {
-  let ideas: Idea[] = []
-  try {
-    ideas = await leerIdeas()
-  } catch (error) {
-    console.error('Error leyendo ideas:', error)
-  }
+  let ideas:     Idea[]     = []
+  let problemas: Problema[] = []
 
-  return <AdminPanel ideas={ideas} />
+  try { ideas     = await leerIdeas()     } catch (e) { console.error('Error leyendo ideas:', e) }
+  try { problemas = await leerProblemas() } catch (e) { console.error('Error leyendo problemas:', e) }
+
+  return <AdminPanel ideas={ideas} problemas={problemas} />
 }
