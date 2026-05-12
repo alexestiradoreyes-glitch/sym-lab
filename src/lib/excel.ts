@@ -19,6 +19,11 @@ export async function guardarIdea(idea: Idea): Promise<void> {
     archivos: idea.archivos || null,
     enlaces_referencia: idea.enlacesReferencia || null,
     consentimiento: idea.consentimiento,
+    consentimiento_confidencialidad: idea.consentimientoConfidencialidad ?? null,
+    consentimiento_uso_empresarial:  idea.consentimientoUsoEmpresarial ?? null,
+    consentimiento_propiedad:        idea.consentimientoPropiedad ?? null,
+    consentimiento_timestamp:        idea.consentimientoTimestamp || null,
+    consentimiento_version:          idea.consentimientoVersion || null,
     audio_url: idea.audioUrl || null,
     audio_duracion: idea.audioDuracion || null,
   })
@@ -52,6 +57,11 @@ export async function leerIdeas(): Promise<Idea[]> {
     archivos: row.archivos || undefined,
     enlacesReferencia: row.enlaces_referencia || undefined,
     consentimiento: row.consentimiento,
+    consentimientoConfidencialidad: row.consentimiento_confidencialidad ?? undefined,
+    consentimientoUsoEmpresarial:   row.consentimiento_uso_empresarial ?? undefined,
+    consentimientoPropiedad:        row.consentimiento_propiedad ?? undefined,
+    consentimientoTimestamp:        row.consentimiento_timestamp || undefined,
+    consentimientoVersion:          row.consentimiento_version || undefined,
     audioUrl: row.audio_url || undefined,
     audioDuracion: row.audio_duracion || undefined,
   }))
@@ -77,14 +87,22 @@ export async function obtenerBufferExcel(): Promise<Buffer> {
     { header: 'Nivel de madurez',      key: 'nivelMadurez',         width: 28 },
     { header: 'Archivos adjuntos',     key: 'archivos',             width: 50 },
     { header: 'Enlaces de referencia', key: 'enlacesReferencia',    width: 55 },
-    { header: 'Consentimiento RGPD',   key: 'consentimiento',       width: 22 },
+    { header: 'Consentimiento RGPD',           key: 'consentimiento',                 width: 22 },
+    { header: 'Consent. Confidencialidad',     key: 'consentimientoConfidencialidad', width: 22 },
+    { header: 'Consent. Uso empresarial',      key: 'consentimientoUsoEmpresarial',   width: 22 },
+    { header: 'Consent. Propiedad',            key: 'consentimientoPropiedad',        width: 22 },
+    { header: 'Fecha aceptación legal',        key: 'consentimientoTimestamp',        width: 26 },
+    { header: 'Versión texto legal',           key: 'consentimientoVersion',          width: 18 },
   ]
 
   ideas.forEach(idea => {
     ws.addRow({
       ...idea,
       archivos: idea.archivos?.join(', ') || '',
-      consentimiento: idea.consentimiento ? 'Sí' : 'No',
+      consentimiento:                 idea.consentimiento ? 'Sí' : 'No',
+      consentimientoConfidencialidad: idea.consentimientoConfidencialidad ? 'Aceptado' : '—',
+      consentimientoUsoEmpresarial:   idea.consentimientoUsoEmpresarial   ? 'Aceptado' : '—',
+      consentimientoPropiedad:        idea.consentimientoPropiedad        ? 'Aceptado' : '—',
     })
   })
 

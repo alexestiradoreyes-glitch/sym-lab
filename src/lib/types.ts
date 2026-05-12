@@ -1,5 +1,13 @@
 // Tipos principales de SYM LAB
 
+export const CONSENTIMIENTO_LEGAL_VERSION = 'v1.0'
+
+export const CONSENTIMIENTO_TEXTOS = {
+  confidencialidad: 'Acepto que las ideas enviadas serán tratadas como confidenciales y no podrán ser utilizadas de forma personal o no autorizada por ninguna persona vinculada a la empresa.',
+  usoEmpresarial:   'Acepto que las ideas enviadas se destinarán exclusivamente a los fines de la empresa y no podrán ser utilizadas para uso personal o particular de ninguna persona física.',
+  propiedad:        'Acepto que las ideas enviadas pasarán a ser propiedad exclusiva de la empresa, cediendo todos los derechos sobre las mismas, y renuncio a reclamar titularidad, compensación económica o derechos posteriores sobre dichas ideas.',
+} as const
+
 export type TipoNotificacion = 'idea' | 'comentario' | 'enlace' | 'estado'
 
 export type EstadoIdea =
@@ -74,6 +82,11 @@ export interface Idea {
   archivos?: string[]
   enlacesReferencia?: string
   consentimiento: boolean
+  consentimientoConfidencialidad?: boolean
+  consentimientoUsoEmpresarial?: boolean
+  consentimientoPropiedad?: boolean
+  consentimientoTimestamp?: string
+  consentimientoVersion?: string
   audioUrl?: string
   audioDuracion?: number
 }

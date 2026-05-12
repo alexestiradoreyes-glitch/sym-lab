@@ -9,7 +9,7 @@ import {
   Upload, X, FileText, ImageIcon, AlertCircle,
   Loader2, ChevronRight, File as FileIcon, Link2,
 } from 'lucide-react'
-import { CATEGORIAS, NIVELES_MADUREZ } from '@/lib/types'
+import { CATEGORIAS, NIVELES_MADUREZ, CONSENTIMIENTO_TEXTOS } from '@/lib/types'
 
 /* ─── Schema de validación ─── */
 const schema = z.object({
@@ -30,6 +30,15 @@ const schema = z.object({
   enlacesReferencia:   z.string().max(2000).optional(),
   consentimiento: z.boolean().refine(v => v === true, {
     message: 'Debes aceptar el tratamiento de datos para continuar',
+  }),
+  consentimientoConfidencialidad: z.boolean().refine(v => v === true, {
+    message: 'Debes aceptar las condiciones de confidencialidad',
+  }),
+  consentimientoUsoEmpresarial: z.boolean().refine(v => v === true, {
+    message: 'Debes aceptar el uso exclusivo para fines de la empresa',
+  }),
+  consentimientoPropiedad: z.boolean().refine(v => v === true, {
+    message: 'Debes aceptar la cesión de derechos sobre las ideas enviadas',
   }),
 })
 
@@ -447,25 +456,88 @@ export default function IdeaForm() {
           )}
         </div>
 
-        {/* Consentimiento RGPD */}
-        <div>
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
-              {...register('consentimiento')}
-            />
-            <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
-              <span className="text-white font-medium">Acepto el tratamiento de mis datos personales</span> conforme
-              al Reglamento General de Protección de Datos (RGPD / UE 2016/679). Los datos facilitados serán
-              utilizados exclusivamente para la gestión y evaluación de mi propuesta de innovación por parte de
-              SYM LAB, y no serán cedidos a terceros.
-              <span className="text-sym-red"> *</span>
-            </span>
-          </label>
-          {errors.consentimiento && (
-            <p className="input-error mt-2"><AlertCircle className="w-3 h-3" />{errors.consentimiento.message}</p>
-          )}
+        {/* Consentimientos legales */}
+        <div className="space-y-4">
+
+          {/* RGPD */}
+          <div>
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                {...register('consentimiento')}
+              />
+              <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
+                <span className="text-white font-medium">Acepto el tratamiento de mis datos personales</span> conforme
+                al Reglamento General de Protección de Datos (RGPD / UE 2016/679). Los datos facilitados serán
+                utilizados exclusivamente para la gestión y evaluación de mi propuesta de innovación por parte de
+                SYM LAB, y no serán cedidos a terceros.
+                <span className="text-sym-red"> *</span>
+              </span>
+            </label>
+            {errors.consentimiento && (
+              <p className="input-error mt-2"><AlertCircle className="w-3 h-3" />{errors.consentimiento.message}</p>
+            )}
+          </div>
+
+          <div className="border-t border-sym-bord/40 pt-4 space-y-4">
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Condiciones legales obligatorias</p>
+
+            {/* Confidencialidad */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                  {...register('consentimientoConfidencialidad')}
+                />
+                <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
+                  {CONSENTIMIENTO_TEXTOS.confidencialidad}
+                  <span className="text-sym-red"> *</span>
+                </span>
+              </label>
+              {errors.consentimientoConfidencialidad && (
+                <p className="input-error mt-2"><AlertCircle className="w-3 h-3" />{errors.consentimientoConfidencialidad.message}</p>
+              )}
+            </div>
+
+            {/* Uso empresarial */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                  {...register('consentimientoUsoEmpresarial')}
+                />
+                <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
+                  {CONSENTIMIENTO_TEXTOS.usoEmpresarial}
+                  <span className="text-sym-red"> *</span>
+                </span>
+              </label>
+              {errors.consentimientoUsoEmpresarial && (
+                <p className="input-error mt-2"><AlertCircle className="w-3 h-3" />{errors.consentimientoUsoEmpresarial.message}</p>
+              )}
+            </div>
+
+            {/* Propiedad */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                  {...register('consentimientoPropiedad')}
+                />
+                <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
+                  {CONSENTIMIENTO_TEXTOS.propiedad}
+                  <span className="text-sym-red"> *</span>
+                </span>
+              </label>
+              {errors.consentimientoPropiedad && (
+                <p className="input-error mt-2"><AlertCircle className="w-3 h-3" />{errors.consentimientoPropiedad.message}</p>
+              )}
+            </div>
+          </div>
+
         </div>
       </section>
 

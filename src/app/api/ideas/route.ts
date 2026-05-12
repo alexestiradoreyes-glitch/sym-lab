@@ -10,6 +10,7 @@ import { enviarEmailIdea }           from '@/lib/email'
 import { enviarPush }                from '@/lib/push'
 import { supabase }                  from '@/lib/supabase'
 import type { Idea }                 from '@/lib/types'
+import { CONSENTIMIENTO_LEGAL_VERSION } from '@/lib/types'
 
 export const runtime = 'nodejs'
 
@@ -42,7 +43,12 @@ export async function POST(request: NextRequest) {
     const beneficiosEsperados = (fd.get('beneficiosEsperados') as string)?.trim()
     const nivelMadurez         = (fd.get('nivelMadurez')         as string)?.trim()
     const enlacesReferencia    = (fd.get('enlacesReferencia')    as string)?.trim()
-    const consentimiento       = fd.get('consentimiento') === 'true'
+    const consentimiento                   = fd.get('consentimiento') === 'true'
+    const consentimientoConfidencialidad   = fd.get('consentimientoConfidencialidad') === 'true'
+    const consentimientoUsoEmpresarial     = fd.get('consentimientoUsoEmpresarial') === 'true'
+    const consentimientoPropiedad          = fd.get('consentimientoPropiedad') === 'true'
+    const consentimientoTimestamp          = new Date().toISOString()
+    const consentimientoVersion            = CONSENTIMIENTO_LEGAL_VERSION
     const audioUrl             = (fd.get('audioUrl')             as string)?.trim() || undefined
     const audioDuracionStr     = fd.get('audioDuracion') as string | null
     const audioDuracion        = audioDuracionStr ? parseInt(audioDuracionStr, 10) : undefined
@@ -54,8 +60,11 @@ export async function POST(request: NextRequest) {
     if (!titulo)                       errores.push('titulo')
     if (!categoria)                    errores.push('categoria')
     if (!nivelMadurez)                 errores.push('nivelMadurez')
-    if (!consentimiento)               errores.push('consentimiento')
-    if (!descripcion)                   errores.push('descripción')
+    if (!consentimiento)                 errores.push('consentimiento')
+    if (!consentimientoConfidencialidad) errores.push('consentimientoConfidencialidad')
+    if (!consentimientoUsoEmpresarial)   errores.push('consentimientoUsoEmpresarial')
+    if (!consentimientoPropiedad)        errores.push('consentimientoPropiedad')
+    if (!descripcion)                    errores.push('descripción')
 
     if (errores.length > 0) {
       return NextResponse.json(
@@ -108,8 +117,13 @@ export async function POST(request: NextRequest) {
       beneficiosEsperados: beneficiosEsperados || undefined,
       nivelMadurez:        nivelMadurez as Idea['nivelMadurez'],
       archivos:            archivosGuardados.length > 0 ? archivosGuardados : undefined,
-      enlacesReferencia:   enlacesReferencia || undefined,
+      enlacesReferencia:               enlacesReferencia || undefined,
       consentimiento,
+      consentimientoConfidencialidad,
+      consentimientoUsoEmpresarial,
+      consentimientoPropiedad,
+      consentimientoTimestamp,
+      consentimientoVersion,
       audioUrl,
       audioDuracion,
     }

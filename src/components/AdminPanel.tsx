@@ -608,6 +608,36 @@ export default function AdminPanel({ ideas }: Props) {
                       </div>
                     )}
 
+                    {/* Registro de consentimiento */}
+                    <div className="border-t border-sym-bord/60 pt-5">
+                      <p className="text-slate-500 text-xs uppercase tracking-wider mb-3">
+                        Registro de consentimiento
+                      </p>
+                      <div className="bg-sym-surf/40 border border-sym-bord/60 rounded-xl p-4 space-y-2">
+                        {[
+                          { label: 'Confidencialidad',      value: idea.consentimientoConfidencialidad },
+                          { label: 'Uso empresarial',        value: idea.consentimientoUsoEmpresarial },
+                          { label: 'Propiedad de la empresa', value: idea.consentimientoPropiedad },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex items-center justify-between">
+                            <span className="text-slate-400 text-sm">{label}</span>
+                            {value
+                              ? <span className="text-xs font-semibold text-green-400 bg-green-900/30 border border-green-700/40 px-2.5 py-0.5 rounded-full">Aceptado</span>
+                              : <span className="text-xs font-semibold text-red-400 bg-red-900/30 border border-red-700/40 px-2.5 py-0.5 rounded-full">No registrado</span>
+                            }
+                          </div>
+                        ))}
+                        {idea.consentimientoTimestamp && (
+                          <div className="pt-2 border-t border-sym-bord/40 space-y-1 text-xs text-slate-500">
+                            <p>Fecha de aceptación: <span className="text-slate-400">{new Date(idea.consentimientoTimestamp).toLocaleString('es-ES')}</span></p>
+                            {idea.consentimientoVersion && (
+                              <p>Versión del texto legal: <span className="text-slate-400">{idea.consentimientoVersion}</span></p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Botón eliminar */}
                     <div className="border-t border-sym-bord/60 pt-5 flex justify-end">
                       <button
