@@ -68,7 +68,7 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
       </p>
 
       {/* Historial de mensajes */}
-      <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+      <div className="space-y-2 max-h-60 overflow-y-auto overscroll-contain pr-1">
         {cargando ? (
           <p className="text-slate-600 text-sm">Cargando mensajes...</p>
         ) : mensajes.length === 0 ? (
@@ -306,7 +306,7 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                       <div className="flex flex-wrap gap-2">
                         {ESTADOS_PROBLEMA.map(e => (
                           <button key={e} onClick={() => cambiarEstado(p, e)}
-                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                            className={`text-sm px-4 py-2.5 rounded-full border transition-all ${
                               estado === e
                                 ? `${ESTADO_PROBLEMA_COLORES[e]} border-current ring-1 ring-current font-semibold`
                                 : 'bg-sym-surf/40 text-slate-500 border-sym-bord/60 hover:text-slate-300'
@@ -323,8 +323,8 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                     {/* Eliminar */}
                     <div className="border-t border-sym-bord/60 pt-5 flex justify-end">
                       <button onClick={() => setAEliminar(p)}
-                        className="flex items-center gap-2 text-xs text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-red-800/40 px-3 py-2 rounded-xl transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />Eliminar problema
+                        className="flex items-center gap-2 text-sm text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-red-800/40 px-4 py-2.5 rounded-xl transition-colors">
+                        <Trash2 className="w-4 h-4" />Eliminar problema
                       </button>
                     </div>
                   </div>

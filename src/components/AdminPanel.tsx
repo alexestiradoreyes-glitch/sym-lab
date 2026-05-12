@@ -612,9 +612,9 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
                     <div className="border-t border-sym-bord/60 pt-5 flex justify-end">
                       <button
                         onClick={() => setIdeaAEliminar(idea)}
-                        className="flex items-center gap-2 text-xs text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-red-800/40 px-3 py-2 rounded-xl transition-colors"
+                        className="flex items-center gap-2 text-sm text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-red-800/40 px-4 py-2.5 rounded-xl transition-colors"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                         Eliminar idea
                       </button>
                     </div>
@@ -630,7 +630,7 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
                           <button
                             key={e}
                             onClick={() => cambiarEstado(idea, e)}
-                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                            className={`text-sm px-4 py-2.5 rounded-full border transition-all ${
                               (estados[idea.id] ?? 'Pendiente') === e
                                 ? `${ESTADO_COLORES[e]} border-current ring-1 ring-current font-semibold`
                                 : 'bg-sym-surf/40 text-slate-500 border-sym-bord/60 hover:text-slate-300'

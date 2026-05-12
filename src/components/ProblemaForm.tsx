@@ -142,7 +142,7 @@ export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-7 sm:space-y-10" noValidate>
 
       {submitError && (
         <div className="bg-red-950/60 border border-red-800/60 rounded-xl p-4 flex items-start gap-3">
@@ -279,7 +279,7 @@ export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
           >
             <Upload className={`w-8 h-8 mx-auto mb-3 ${dragOver ? 'text-sym-red' : 'text-slate-600'}`} />
             <p className="text-slate-400 text-sm mb-1">
-              <span className="text-white font-medium">Haz clic para seleccionar</span> o arrastra los archivos aquí
+              <span className="text-white font-medium">Haz clic o toca para seleccionar archivos</span>
             </p>
             <p className="text-slate-600 text-xs">PNG, JPG, PDF, DOCX, XLSX · máx. {MAX_ARCHIVOS} archivos de {MAX_TAMANO_MB} MB</p>
           </div>

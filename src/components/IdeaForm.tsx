@@ -195,7 +195,7 @@ export default function IdeaForm() {
 
   /* ── Render ── */
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-7 sm:space-y-10" noValidate>
 
       {/* Error global */}
       {submitError && (
@@ -416,7 +416,7 @@ export default function IdeaForm() {
           >
             <Upload className={`w-8 h-8 mx-auto mb-3 ${dragOver ? 'text-sym-red' : 'text-slate-600'}`} />
             <p className="text-slate-400 text-sm mb-1">
-              <span className="text-white font-medium">Haz clic para seleccionar</span> o arrastra los archivos aquí
+              <span className="text-white font-medium">Haz clic o toca para seleccionar archivos</span>
             </p>
             <p className="text-slate-600 text-xs">PNG, JPG, PDF, DOCX, XLSX</p>
           </div>
@@ -464,7 +464,7 @@ export default function IdeaForm() {
             <label className="flex items-start gap-3 cursor-pointer group">
               <input
                 type="checkbox"
-                className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                className="accent-sym-red w-5 h-5 mt-0.5 flex-shrink-0 cursor-pointer"
                 {...register('consentimiento')}
               />
               <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
@@ -488,7 +488,7 @@ export default function IdeaForm() {
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                  className="accent-sym-red w-5 h-5 mt-0.5 flex-shrink-0 cursor-pointer"
                   {...register('consentimientoConfidencialidad')}
                 />
                 <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
@@ -506,7 +506,7 @@ export default function IdeaForm() {
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                  className="accent-sym-red w-5 h-5 mt-0.5 flex-shrink-0 cursor-pointer"
                   {...register('consentimientoUsoEmpresarial')}
                 />
                 <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
@@ -524,7 +524,7 @@ export default function IdeaForm() {
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="accent-sym-red w-4 h-4 mt-0.5 flex-shrink-0"
+                  className="accent-sym-red w-5 h-5 mt-0.5 flex-shrink-0 cursor-pointer"
                   {...register('consentimientoPropiedad')}
                 />
                 <span className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
