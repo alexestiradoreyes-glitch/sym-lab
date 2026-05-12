@@ -95,23 +95,29 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
 
       {/* Input nuevo mensaje */}
       <div className="bg-sym-surf/40 border border-sym-bord/60 rounded-xl p-4 space-y-3">
-        <input
-          type="text"
-          value={nombre}
-          onChange={e => setNombre(e.target.value)}
-          placeholder="Tu nombre"
-          className="input-field text-sm py-2"
-        />
-        <textarea
-          value={texto}
-          onChange={e => setTexto(e.target.value.slice(0, 2000))}
-          placeholder="Escribe tu comentario o respuesta..."
-          rows={3}
-          className="input-field text-sm resize-y"
-          onKeyDown={e => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleEnviar()
-          }}
-        />
+        <div>
+          <label className="input-label text-xs mb-1">Nombre <span className="text-sym-red">*</span></label>
+          <input
+            type="text"
+            value={nombre}
+            onChange={e => setNombre(e.target.value)}
+            placeholder="Tu nombre y apellidos"
+            className="input-field text-sm py-2"
+          />
+        </div>
+        <div>
+          <label className="input-label text-xs mb-1">Comentario <span className="text-sym-red">*</span></label>
+          <textarea
+            value={texto}
+            onChange={e => setTexto(e.target.value.slice(0, 2000))}
+            placeholder="Escribe tu comentario o respuesta..."
+            rows={3}
+            className="input-field text-sm resize-y"
+            onKeyDown={e => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleEnviar()
+            }}
+          />
+        </div>
         <div className="flex items-center justify-between">
           <span className={`text-xs ${texto.length >= 2000 ? 'text-red-400' : 'text-slate-600'}`}>
             {texto.length} / 2000 · Ctrl+Enter para enviar
