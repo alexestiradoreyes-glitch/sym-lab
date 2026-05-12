@@ -4,12 +4,12 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { supabasePublic } from '@/lib/supabase-public'
 import Image from 'next/image'
 import {
-  Download, Search, ChevronDown, ChevronUp,
+  Download, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
-  Tag, TrendingUp, FileText, X,
+  Tag, TrendingUp, FileText,
   MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft, AlertTriangle, Lightbulb,
 } from 'lucide-react'
-import { Idea, CATEGORIAS, NIVELES_MADUREZ, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
+import { Idea, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea, Problema } from '@/lib/types'
 import ProblemasAdminSection from './ProblemasAdminSection'
 
@@ -177,9 +177,6 @@ const IDEAS_POR_PAGINA = 20
 /* ─── Panel principal ─── */
 export default function AdminPanel({ ideas, problemas = [] }: Props) {
   const [tabActivo, setTabActivo] = useState<'ideas' | 'problemas'>('ideas')
-  const [busqueda,   setBusqueda]   = useState('')
-  const [catFiltro,  setCatFiltro]  = useState('todas')
-  const [madFiltro,  setMadFiltro]  = useState('todos')
   const [expandido,  setExpandido]  = useState<string | null>(null)
   const [exportando, setExportando] = useState(false)
   const [estados,        setEstados]        = useState<Record<string, EstadoIdea>>({})
@@ -286,22 +283,7 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
     return { total: ideasVivas.length, porMadurez }
   }, [ideasVivas])
 
-  const ideasFiltradas = useMemo(() => {
-    return ideasVivas.filter(i => {
-      if (catFiltro !== 'todas' && i.categoria    !== catFiltro) return false
-      if (madFiltro !== 'todos' && i.nivelMadurez !== madFiltro) return false
-      if (busqueda) {
-        const q = busqueda.toLowerCase()
-        return (
-          i.nombre.toLowerCase().includes(q)      ||
-          i.titulo.toLowerCase().includes(q)      ||
-          i.email.toLowerCase().includes(q)       ||
-          (i.descripcion ?? '').toLowerCase().includes(q)
-        )
-      }
-      return true
-    })
-  }, [ideasVivas, catFiltro, madFiltro, busqueda])
+  const ideasFiltradas = ideasVivas
 
   const totalPaginas  = Math.max(1, Math.ceil(ideasFiltradas.length / IDEAS_POR_PAGINA))
   const paginaActual  = Math.min(pagina, totalPaginas)
@@ -442,50 +424,6 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
               <p className="text-slate-500 text-sm mt-1">{label}</p>
             </div>
           ))}
-        </div>
-
-        {/* ── Filtros ── */}
-        <div className="card p-5">
-          <div className="flex flex-wrap gap-4">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input
-                type="text"
-                value={busqueda}
-                onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
-                placeholder="Buscar por nombre, título, email..."
-                className="input-field pl-10"
-              />
-              {busqueda && (
-                <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <select
-              value={catFiltro}
-              onChange={e => { setCatFiltro(e.target.value); setPagina(1) }}
-              className="input-field flex-shrink-0 w-auto"
-            >
-              <option value="todas">Todas las categorías</option>
-              {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-
-            <select
-              value={madFiltro}
-              onChange={e => { setMadFiltro(e.target.value); setPagina(1) }}
-              className="input-field flex-shrink-0 w-auto"
-            >
-              <option value="todos">Todos los niveles</option>
-              {NIVELES_MADUREZ.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-
-          <p className="text-slate-600 text-xs mt-3">
-            Mostrando <strong className="text-slate-400">{ideasFiltradas.length}</strong> de {stats.total} ideas
-            {totalPaginas > 1 && <span> · página <strong className="text-slate-400">{paginaActual}</strong> de {totalPaginas}</span>}
-          </p>
         </div>
 
         {/* ── Lista de ideas ── */}
