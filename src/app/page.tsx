@@ -69,11 +69,7 @@ export default function PaginaInicio() {
 
             <Link
               href="/problemas/nueva"
-              className="inline-flex items-center justify-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 w-64 sm:w-72
-                         rounded-xl font-semibold border border-orange-600/60 text-orange-300
-                         hover:border-orange-500 hover:text-orange-200 hover:bg-orange-950/30
-                         transition-all duration-200"
-              style={{ textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}
+              className="btn-primary inline-flex items-center justify-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red w-64 sm:w-72"
             >
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               Problema no resuelto
