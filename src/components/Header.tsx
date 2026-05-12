@@ -57,13 +57,10 @@ export default function Header({ minimalista = false }: HeaderProps) {
             </nav>
           )}
 
-          {/* Campana notificaciones + CTA desktop */}
+          {/* Campana notificaciones */}
           {!minimalista && (
             <div className="hidden md:flex items-center gap-3">
               <NotificacionesBell />
-              <Link href="/ideas/nueva" className="btn-primary text-sm">
-                Enviar una idea
-              </Link>
             </div>
           )}
 
