@@ -30,9 +30,6 @@ const schema = z.object({
     required_error: 'Selecciona el área',
   }),
   enlacesReferencia:  z.string().max(2000).optional(),
-  solucionPropuesta:  z.string().max(3000).optional(),
-  beneficioEsperado:  z.string().max(2000).optional(),
-  recursosNecesarios: z.string().max(2000).optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -259,49 +256,10 @@ export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
 
       <div className="border-t border-sym-bord" />
 
-      {/* ─── 3: Propuesta de solución ─── */}
-      <section>
-        <div className="flex items-center gap-3 mb-2">
-          <span className="w-7 h-7 bg-sym-red rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">3</span>
-          <div>
-            <h2 className="text-white font-bold text-lg">Propuesta de solución</h2>
-            <p className="text-slate-500 text-sm">Todos los campos de esta sección son opcionales</p>
-          </div>
-        </div>
-        <p className="text-slate-600 text-sm mb-5 pl-10">
-          No es obligatorio proponer una solución. Si conoces el problema pero no sabes cómo resolverlo, puedes dejarlo en blanco.
-        </p>
-        <div className="space-y-5">
-          <div>
-            <label htmlFor="solucionPropuesta" className="input-label">Posible solución propuesta</label>
-            <textarea id="solucionPropuesta" rows={5} className="input-field resize-y"
-              placeholder="¿Cómo crees que podría resolverse este problema?"
-              {...register('solucionPropuesta')}
-            />
-          </div>
-          <div>
-            <label htmlFor="beneficioEsperado" className="input-label">Beneficio esperado</label>
-            <textarea id="beneficioEsperado" rows={3} className="input-field resize-y"
-              placeholder="¿Qué mejoraría si se aplica esta solución?"
-              {...register('beneficioEsperado')}
-            />
-          </div>
-          <div>
-            <label htmlFor="recursosNecesarios" className="input-label">Recursos necesarios</label>
-            <textarea id="recursosNecesarios" rows={3} className="input-field resize-y"
-              placeholder="¿Qué personas, herramientas, tiempo o materiales serían necesarios?"
-              {...register('recursosNecesarios')}
-            />
-          </div>
-        </div>
-      </section>
-
-      <div className="border-t border-sym-bord" />
-
-      {/* ─── 4: Archivos y referencias ─── */}
+      {/* ─── 3: Archivos y referencias ─── */}
       <section>
         <div className="flex items-center gap-3 mb-6">
-          <span className="w-7 h-7 bg-sym-red rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">4</span>
+          <span className="w-7 h-7 bg-sym-red rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">3</span>
           <div>
             <h2 className="text-white font-bold text-lg">Documentación de apoyo</h2>
             <p className="text-slate-500 text-sm">Archivos y enlaces que ilustren el problema (opcionales)</p>
