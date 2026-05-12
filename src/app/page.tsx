@@ -50,28 +50,34 @@ export default function PaginaInicio() {
           </p>
 
           {/* Botones CTA */}
-          <div className="flex flex-col items-center gap-5">
+          <div className="flex flex-col items-center gap-4">
             <Link
               href="/ideas/nueva"
-              className="btn-primary inline-flex items-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red"
+              className="btn-primary inline-flex items-center justify-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red w-64 sm:w-72"
             >
-              <Lightbulb className="w-5 h-5" />
+              <Lightbulb className="w-5 h-5 flex-shrink-0" />
               Enviar mi idea
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 flex-shrink-0" />
             </Link>
 
-            <p className="text-slate-400 text-sm sm:text-base italic"
-               style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>
+            <p
+              className="text-white text-sm sm:text-base font-medium italic max-w-sm"
+              style={{ textShadow: '0 2px 16px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1)' }}
+            >
               Detectar un problema sin resolver también es el primer paso para innovar.
             </p>
 
             <Link
               href="/problemas/nueva"
-              className="btn-primary inline-flex items-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red"
+              className="inline-flex items-center justify-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 w-64 sm:w-72
+                         rounded-xl font-semibold border border-orange-600/60 text-orange-300
+                         hover:border-orange-500 hover:text-orange-200 hover:bg-orange-950/30
+                         transition-all duration-200"
+              style={{ textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}
             >
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               Problema no resuelto
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 flex-shrink-0" />
             </Link>
           </div>
         </div>
