@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Lightbulb, ArrowRight } from 'lucide-react'
+import { Lightbulb, ArrowRight, AlertTriangle } from 'lucide-react'
 
 export default function PaginaInicio() {
   return (
@@ -49,15 +49,31 @@ export default function PaginaInicio() {
             Aporta, propone y ayuda a construir nuevas formas de innovar en SYM LAB.
           </p>
 
-          {/* Botón CTA */}
-          <Link
-            href="/ideas/nueva"
-            className="btn-primary inline-flex items-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red"
-          >
-            <Lightbulb className="w-5 h-5" />
-            Enviar mi idea
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {/* Botones CTA */}
+          <div className="flex flex-col items-center gap-5">
+            <Link
+              href="/ideas/nueva"
+              className="btn-primary inline-flex items-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red"
+            >
+              <Lightbulb className="w-5 h-5" />
+              Enviar mi idea
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <p className="text-slate-400 text-sm sm:text-base italic"
+               style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>
+              Detectar un problema sin resolver también es el primer paso para innovar.
+            </p>
+
+            <Link
+              href="/problemas/nueva"
+              className="btn-primary inline-flex items-center gap-3 text-base sm:text-lg px-8 sm:px-10 py-4 glow-red"
+            >
+              <AlertTriangle className="w-5 h-5" />
+              Problema no resuelto
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
     </div>
