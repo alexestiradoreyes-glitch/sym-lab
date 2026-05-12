@@ -3,9 +3,9 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   Search, ChevronDown, ChevronUp, Mail, Building,
-  Calendar, FileText, X, Trash2, RefreshCw, Send,
+  Calendar, FileText, X, Trash2, RefreshCw, Send, Loader2, MessageSquare,
 } from 'lucide-react'
-import type { Problema, EstadoProblema } from '@/lib/types'
+import type { Problema, EstadoProblema, ProblemasSolucion } from '@/lib/types'
 import {
   ESTADOS_PROBLEMA, ESTADO_PROBLEMA_COLORES,
   IMPACTO_COLORES, FRECUENCIA_COLORES,
@@ -13,38 +13,138 @@ import {
 
 const PROBLEMAS_POR_PAGINA = 20
 
-interface AdminData {
-  estado: EstadoProblema
-  respuestaEquipo?: string
-  solucionOficial?: string
-  proximosPasos?: string
-  responsable?: string
-  fechaEstimada?: string
+/* ─── Chat permanente por problema ─── */
+function ChatProblema({ problemaId }: { problemaId: string }) {
+  const [mensajes,  setMensajes]  = useState<ProblemasSolucion[]>([])
+  const [cargando,  setCargando]  = useState(true)
+  const [nombre,    setNombre]    = useState('')
+  const [texto,     setTexto]     = useState('')
+  const [enviando,  setEnviando]  = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
+
+  const cargar = useCallback(async () => {
+    setCargando(true)
+    try {
+      const res = await fetch(`/api/problemas/soluciones?problemaId=${problemaId}`)
+      if (res.ok) setMensajes(await res.json())
+    } finally {
+      setCargando(false)
+    }
+  }, [problemaId])
+
+  useEffect(() => { cargar() }, [cargar])
+
+  const handleEnviar = async () => {
+    if (!nombre.trim()) { setError('Introduce tu nombre.'); return }
+    if (!texto.trim())  { setError('Escribe un mensaje.');  return }
+    setError(null)
+    setEnviando(true)
+    try {
+      const res = await fetch('/api/problemas/soluciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemaId, nombre, solucion: texto }),
+      })
+      if (res.ok) {
+        const nuevo = await res.json()
+        setMensajes(prev => [...prev, nuevo])
+        setTexto('')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Error al enviar.')
+      }
+    } catch {
+      setError('Error de conexión.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <div className="border-t border-sym-bord/60 pt-5 space-y-4">
+      <p className="text-slate-500 text-xs uppercase tracking-wider flex items-center gap-1.5">
+        <MessageSquare className="w-3.5 h-3.5" />
+        Conversación del equipo ({mensajes.length})
+      </p>
+
+      {/* Historial de mensajes */}
+      <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+        {cargando ? (
+          <p className="text-slate-600 text-sm">Cargando mensajes...</p>
+        ) : mensajes.length === 0 ? (
+          <p className="text-slate-600 text-sm italic">Sin mensajes todavía. Sé el primero en comentar.</p>
+        ) : (
+          mensajes.map((m, i) => (
+            <div
+              key={m.id}
+              className={`rounded-xl p-3.5 border ${
+                i % 2 === 0
+                  ? 'bg-sym-surf/60 border-sym-bord/60'
+                  : 'bg-blue-950/20 border-blue-800/30'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                <span className="text-white text-sm font-semibold">{m.nombre}</span>
+                <span className="text-slate-600 text-xs">{m.fechaHora}</span>
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{m.solucion}</p>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Input nuevo mensaje */}
+      <div className="bg-sym-surf/40 border border-sym-bord/60 rounded-xl p-4 space-y-3">
+        <input
+          type="text"
+          value={nombre}
+          onChange={e => setNombre(e.target.value)}
+          placeholder="Tu nombre"
+          className="input-field text-sm py-2"
+        />
+        <textarea
+          value={texto}
+          onChange={e => setTexto(e.target.value.slice(0, 2000))}
+          placeholder="Escribe tu comentario o respuesta..."
+          rows={3}
+          className="input-field text-sm resize-y"
+          onKeyDown={e => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleEnviar()
+          }}
+        />
+        <div className="flex items-center justify-between">
+          <span className={`text-xs ${texto.length >= 2000 ? 'text-red-400' : 'text-slate-600'}`}>
+            {texto.length} / 2000 · Ctrl+Enter para enviar
+          </span>
+          {error && <p className="text-red-400 text-xs">{error}</p>}
+          <button
+            type="button"
+            onClick={handleEnviar}
+            disabled={enviando}
+            className="btn-primary flex items-center gap-2 text-sm py-2 px-4"
+          >
+            {enviando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            {enviando ? 'Enviando...' : 'Enviar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-interface Props {
-  problemas: Problema[]
-}
+/* ─── Panel principal ─── */
+interface Props { problemas: Problema[] }
 
 export default function ProblemasAdminSection({ problemas }: Props) {
-  const [busqueda,        setBusqueda]        = useState('')
-  const [expandido,       setExpandido]       = useState<string | null>(null)
-  const [adminData,       setAdminData]       = useState<Record<string, AdminData>>({})
-  const [problemasVivos,  setProblemasVivos]  = useState<Problema[]>(problemas)
-  const [aEliminar,       setAEliminar]       = useState<Problema | null>(null)
-  const [eliminando,      setEliminando]      = useState(false)
-  const [eliminarError,   setEliminarError]   = useState<string | null>(null)
-  const [refreshing,      setRefreshing]      = useState(false)
-  const [pagina,          setPagina]          = useState(1)
-  const [guardandoResp,   setGuardandoResp]   = useState<string | null>(null)
-
-  const [respuestas, setRespuestas] = useState<Record<string, {
-    respuestaEquipo: string
-    solucionOficial: string
-    proximosPasos: string
-    responsable: string
-    fechaEstimada: string
-  }>>({})
+  const [busqueda,       setBusqueda]       = useState('')
+  const [expandido,      setExpandido]      = useState<string | null>(null)
+  const [estados,        setEstados]        = useState<Record<string, EstadoProblema>>({})
+  const [problemasVivos, setProblemasVivos] = useState<Problema[]>(problemas)
+  const [aEliminar,      setAEliminar]      = useState<Problema | null>(null)
+  const [eliminando,     setEliminando]     = useState(false)
+  const [eliminarError,  setEliminarError]  = useState<string | null>(null)
+  const [refreshing,     setRefreshing]     = useState(false)
+  const [pagina,         setPagina]         = useState(1)
 
   const refetch = useCallback(() => {
     fetch('/api/problemas')
@@ -58,7 +158,11 @@ export default function ProblemasAdminSection({ problemas }: Props) {
   useEffect(() => {
     fetch('/api/problemas/estado')
       .then(r => r.ok ? r.json() : {})
-      .then(setAdminData)
+      .then((data: Record<string, { estado: EstadoProblema }>) => {
+        const map: Record<string, EstadoProblema> = {}
+        Object.entries(data).forEach(([id, v]) => { map[id] = v.estado })
+        setEstados(map)
+      })
       .catch(() => {})
   }, [])
 
@@ -69,41 +173,12 @@ export default function ProblemasAdminSection({ problemas }: Props) {
   }
 
   const cambiarEstado = async (p: Problema, estado: EstadoProblema) => {
-    setAdminData(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || {}), estado } }))
+    setEstados(prev => ({ ...prev, [p.id]: estado }))
     await fetch('/api/problemas/estado', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ problemaId: p.id, estado }),
     }).catch(() => {})
-  }
-
-  const guardarRespuesta = async (p: Problema) => {
-    const r = respuestas[p.id] || {}
-    setGuardandoResp(p.id)
-    await fetch('/api/problemas/estado', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        problemaId:      p.id,
-        respuestaEquipo: r.respuestaEquipo || '',
-        solucionOficial: r.solucionOficial || '',
-        proximosPasos:   r.proximosPasos   || '',
-        responsable:     r.responsable     || '',
-        fechaEstimada:   r.fechaEstimada   || '',
-      }),
-    })
-    setAdminData(prev => ({
-      ...prev,
-      [p.id]: {
-        ...(prev[p.id] || {} as AdminData),
-        respuestaEquipo: r.respuestaEquipo,
-        solucionOficial: r.solucionOficial,
-        proximosPasos:   r.proximosPasos,
-        responsable:     r.responsable,
-        fechaEstimada:   r.fechaEstimada,
-      },
-    }))
-    setGuardandoResp(null)
   }
 
   const confirmarEliminar = async () => {
@@ -142,19 +217,16 @@ export default function ProblemasAdminSection({ problemas }: Props) {
   const paginaActual = Math.min(pagina, totalPaginas)
   const pagElem      = filtrados.slice((paginaActual - 1) * PROBLEMAS_POR_PAGINA, paginaActual * PROBLEMAS_POR_PAGINA)
 
-  const setResp = (id: string, campo: string, valor: string) =>
-    setRespuestas(prev => ({ ...prev, [id]: { ...(prev[id] || { respuestaEquipo: '', solucionOficial: '', proximosPasos: '', responsable: '', fechaEstimada: '' }), [campo]: valor } }))
-
   return (
     <div className="space-y-6">
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total problemas',  valor: problemasVivos.length },
-          { label: 'Nuevos',           valor: problemasVivos.filter(p => (adminData[p.id]?.estado ?? p.estado ?? 'Nuevo') === 'Nuevo').length },
-          { label: 'En análisis',      valor: problemasVivos.filter(p => (adminData[p.id]?.estado ?? p.estado ?? 'Nuevo') === 'En análisis').length },
-          { label: 'Resueltos',        valor: problemasVivos.filter(p => (adminData[p.id]?.estado ?? p.estado ?? 'Nuevo') === 'Resuelto').length },
+          { label: 'Total problemas', valor: problemasVivos.length },
+          { label: 'Nuevos',          valor: problemasVivos.filter(p => (estados[p.id] ?? p.estado ?? 'Nuevo') === 'Nuevo').length },
+          { label: 'En análisis',     valor: problemasVivos.filter(p => (estados[p.id] ?? p.estado ?? 'Nuevo') === 'En análisis').length },
+          { label: 'Resueltos',       valor: problemasVivos.filter(p => (estados[p.id] ?? p.estado ?? 'Nuevo') === 'Resuelto').length },
         ].map(({ label, valor }) => (
           <div key={label} className="card p-5">
             <p className="text-3xl font-black text-white">{valor}</p>
@@ -163,13 +235,12 @@ export default function ProblemasAdminSection({ problemas }: Props) {
         ))}
       </div>
 
-      {/* Buscador + refresh */}
+      {/* Buscador */}
       <div className="card p-5">
         <div className="flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input
-              type="text" value={busqueda}
+            <input type="text" value={busqueda}
               onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
               placeholder="Buscar por título, nombre, email..."
               className="input-field pl-10"
@@ -181,7 +252,7 @@ export default function ProblemasAdminSection({ problemas }: Props) {
             )}
           </div>
           <button onClick={handleRefrescar} disabled={refreshing}
-            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white border border-sym-bord hover:border-slate-500 bg-black/30 hover:bg-white/10 py-2 px-3 rounded-xl transition-all disabled:opacity-40">
+            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white border border-sym-bord hover:border-slate-500 bg-black/30 py-2 px-3 rounded-xl transition-all disabled:opacity-40">
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
@@ -199,33 +270,20 @@ export default function ProblemasAdminSection({ problemas }: Props) {
       ) : (
         <div className="space-y-3">
           {pagElem.map(p => {
-            const estado = adminData[p.id]?.estado ?? p.estado ?? 'Nuevo'
-            const respLocal = respuestas[p.id] || {
-              respuestaEquipo: adminData[p.id]?.respuestaEquipo || '',
-              solucionOficial: adminData[p.id]?.solucionOficial || '',
-              proximosPasos:   adminData[p.id]?.proximosPasos   || '',
-              responsable:     adminData[p.id]?.responsable     || '',
-              fechaEstimada:   adminData[p.id]?.fechaEstimada   || '',
-            }
-
+            const estado = estados[p.id] ?? p.estado ?? 'Nuevo'
             return (
               <div key={p.id} className="card overflow-hidden">
-                {/* Fila principal */}
+
+                {/* Cabecera */}
                 <button
                   className="w-full text-left p-5 flex items-start gap-4 hover:bg-sym-surf/50 transition-colors"
                   onClick={() => setExpandido(expandido === p.id ? null : p.id)}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${IMPACTO_COLORES[p.impacto]}`}>
-                        {p.impacto}
-                      </span>
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full ${FRECUENCIA_COLORES[p.frecuencia]}`}>
-                        {p.frecuencia}
-                      </span>
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full ${ESTADO_PROBLEMA_COLORES[estado as EstadoProblema]}`}>
-                        {estado}
-                      </span>
+                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${IMPACTO_COLORES[p.impacto]}`}>{p.impacto}</span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full ${FRECUENCIA_COLORES[p.frecuencia]}`}>{p.frecuencia}</span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full ${ESTADO_PROBLEMA_COLORES[estado as EstadoProblema]}`}>{estado}</span>
                       <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400">{p.area}</span>
                     </div>
                     <h3 className="text-white font-semibold text-base leading-snug mb-1 truncate">{p.titulo}</h3>
@@ -240,7 +298,7 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                   </div>
                 </button>
 
-                {/* Detalle expandido */}
+                {/* Detalle */}
                 {expandido === p.id && (
                   <div className="border-t border-sym-bord p-6 bg-sym-surf/30 space-y-5">
 
@@ -272,27 +330,6 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                       </div>
                     )}
 
-                    {p.solucionPropuesta?.trim() && (
-                      <div className="border-l-4 border-blue-600 pl-4 py-1">
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Solución propuesta por el usuario</p>
-                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{p.solucionPropuesta}</p>
-                      </div>
-                    )}
-
-                    {p.beneficioEsperado?.trim() && (
-                      <div className="border-l-4 border-green-600 pl-4 py-1">
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Beneficio esperado</p>
-                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{p.beneficioEsperado}</p>
-                      </div>
-                    )}
-
-                    {p.recursosNecesarios?.trim() && (
-                      <div className="border-l-4 border-purple-600 pl-4 py-1">
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Recursos necesarios</p>
-                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{p.recursosNecesarios}</p>
-                      </div>
-                    )}
-
                     {/* Estado */}
                     <div className="border-t border-sym-bord/60 pt-5">
                       <p className="text-slate-500 text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5">
@@ -312,50 +349,8 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                       </div>
                     </div>
 
-                    {/* Respuesta del administrador */}
-                    <div className="border-t border-sym-bord/60 pt-5">
-                      <p className="text-slate-500 text-xs uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                        <Send className="w-3.5 h-3.5" />Respuesta del equipo
-                      </p>
-                      <div className="space-y-3">
-                        {[
-                          { campo: 'respuestaEquipo', label: 'Respuesta del equipo', placeholder: '¿Se acepta, se estudiará, se rechaza o necesita más información?' },
-                          { campo: 'solucionOficial',  label: 'Solución oficial propuesta', placeholder: 'Solución aprobada o recomendada por el equipo.' },
-                          { campo: 'proximosPasos',    label: 'Próximos pasos', placeholder: '¿Qué se hará a continuación?' },
-                        ].map(({ campo, label, placeholder }) => (
-                          <div key={campo}>
-                            <label className="text-slate-500 text-xs block mb-1">{label}</label>
-                            <textarea rows={3} className="input-field text-sm resize-y" placeholder={placeholder}
-                              value={(respLocal as Record<string, string>)[campo] || ''}
-                              onChange={e => setResp(p.id, campo, e.target.value)}
-                            />
-                          </div>
-                        ))}
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-slate-500 text-xs block mb-1">Responsable asignado</label>
-                            <input type="text" className="input-field text-sm" placeholder="Nombre del responsable"
-                              value={respLocal.responsable || ''}
-                              onChange={e => setResp(p.id, 'responsable', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <label className="text-slate-500 text-xs block mb-1">Fecha estimada de revisión</label>
-                            <input type="date" className="input-field text-sm"
-                              value={respLocal.fechaEstimada || ''}
-                              onChange={e => setResp(p.id, 'fechaEstimada', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          <button onClick={() => guardarRespuesta(p)} disabled={guardandoResp === p.id}
-                            className="btn-primary flex items-center gap-2 text-sm py-2 px-4">
-                            <Send className="w-3.5 h-3.5" />
-                            {guardandoResp === p.id ? 'Guardando...' : 'Guardar respuesta'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Chat permanente */}
+                    <ChatProblema problemaId={p.id} />
 
                     {/* Eliminar */}
                     <div className="border-t border-sym-bord/60 pt-5 flex justify-end">
