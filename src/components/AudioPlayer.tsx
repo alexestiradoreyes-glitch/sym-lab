@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Play, Pause } from 'lucide-react'
+import { Play, Pause, AlertCircle } from 'lucide-react'
 
 interface Props {
   url: string
@@ -17,12 +17,13 @@ export default function AudioPlayer({ url, duracion }: Props) {
   const [reproduciendo, setReproduciendo] = useState(false)
   const [progreso,      setProgreso]      = useState(0)
   const [durReal,       setDurReal]       = useState(duracion ?? 0)
+  const [error,         setError]         = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const toggle = () => {
-    if (!audioRef.current) return
+    if (!audioRef.current || error) return
     if (reproduciendo) { audioRef.current.pause(); setReproduciendo(false) }
-    else               { audioRef.current.play();  setReproduciendo(true)  }
+    else               { audioRef.current.play().catch(() => setError(true)); setReproduciendo(true) }
   }
 
   const onTimeUpdate = () => {
@@ -37,9 +38,18 @@ export default function AudioPlayer({ url, duracion }: Props) {
 
   const seek = (e: React.MouseEvent<HTMLDivElement>) => {
     const a = audioRef.current
-    if (!a?.duration) return
+    if (!a?.duration || error) return
     const rect = e.currentTarget.getBoundingClientRect()
     a.currentTime = ((e.clientX - rect.left) / rect.width) * a.duration
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 bg-sym-surf/50 border border-sym-bord/60 rounded-xl px-4 py-3 text-slate-500 text-sm">
+        <AlertCircle className="w-4 h-4 text-slate-600 flex-shrink-0" />
+        <span>No se pudo cargar el audio</span>
+      </div>
+    )
   }
 
   return (
@@ -75,6 +85,7 @@ export default function AudioPlayer({ url, duracion }: Props) {
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
         onEnded={() => { setReproduciendo(false); setProgreso(0) }}
+        onError={() => { setError(true); setReproduciendo(false) }}
         hidden
       />
     </div>
