@@ -102,7 +102,9 @@ export async function subirArchivosProblema(id: string, archivos: File[]): Promi
       contentType: archivo.type,
       upsert: false,
     })
-    if (!error) {
+    if (error) {
+      console.error('[SYM LAB] Error subiendo archivo de problema:', error.message, { bucket: BUCKET, ruta: nombreSeguro })
+    } else {
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(nombreSeguro)
       urls.push(data.publicUrl)
     }

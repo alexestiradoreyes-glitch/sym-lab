@@ -193,9 +193,16 @@ export default function IdeaForm() {
     </div>
   )
 
+  const onValidationError = () => {
+    setTimeout(() => {
+      const primerError = document.querySelector('.input-error')
+      if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+  }
+
   /* ── Render ── */
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-7 sm:space-y-10" noValidate>
+    <form onSubmit={handleSubmit(onSubmit, onValidationError)} className="space-y-7 sm:space-y-10" noValidate>
 
       {/* Error global */}
       {submitError && (
@@ -540,6 +547,16 @@ export default function IdeaForm() {
 
         </div>
       </section>
+
+      {/* ─── BANNER DE ERRORES DE VALIDACIÓN ─── */}
+      {Object.keys(errors).length > 0 && (
+        <div className="bg-red-950/60 border border-red-800/60 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="text-red-300 text-sm">
+            Hay campos obligatorios sin completar. Revisa los avisos marcados en rojo antes de enviar.
+          </p>
+        </div>
+      )}
 
       {/* ─── BOTÓN ENVIAR ─── */}
       <div className="pt-4">

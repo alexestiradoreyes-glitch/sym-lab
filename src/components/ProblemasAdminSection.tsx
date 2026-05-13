@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import {
   ChevronDown, ChevronUp, Mail, Building,
   Calendar, FileText, Trash2, RefreshCw, Send, Loader2, MessageSquare,
+  Download, ImageIcon, Paperclip, Link2,
 } from 'lucide-react'
 import type { Problema, EstadoProblema, ProblemasSolucion } from '@/lib/types'
 import {
@@ -295,6 +296,72 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                       <div className="border-l-4 border-yellow-600 pl-4 py-1">
                         <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Contexto</p>
                         <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{p.contexto}</p>
+                      </div>
+                    )}
+
+                    {p.enlacesReferencia && (
+                      <div className="border-l-4 border-blue-600 pl-4 py-1">
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Link2 className="w-3 h-3" />
+                          Enlaces de referencia
+                        </p>
+                        <div className="space-y-1">
+                          {p.enlacesReferencia.split('\n').filter(Boolean).map((url, i) => (
+                            <a
+                              key={i}
+                              href={url.trim()}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-sm text-blue-400 hover:text-blue-300 underline break-all"
+                            >
+                              {url.trim()}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Archivos adjuntos */}
+                    {p.archivos && p.archivos.length > 0 && (
+                      <div>
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <Paperclip className="w-3.5 h-3.5" />
+                          Archivos adjuntos ({p.archivos.length})
+                        </p>
+                        <div className="space-y-2">
+                          {p.archivos.map(url => {
+                            const nombreCompleto = url.split('/').pop() ?? 'archivo'
+                            const nombre = nombreCompleto.replace(/^\d+_/, '')
+                            const ext = nombre.split('.').pop()?.toLowerCase() ?? ''
+                            const esImagen = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)
+                            const esPDF = ext === 'pdf'
+                            return (
+                              <div key={url} className="rounded-xl border border-sym-bord overflow-hidden bg-sym-card">
+                                {esImagen && (
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                                    <img src={url} alt={nombre} className="w-full max-h-52 object-cover hover:opacity-90 transition-opacity" />
+                                  </a>
+                                )}
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={nombre}
+                                  className="flex items-center gap-3 px-4 py-3 hover:bg-sym-surf/60 transition-colors group"
+                                >
+                                  {esImagen
+                                    ? <ImageIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    : esPDF
+                                      ? <FileText className="w-4 h-4 text-red-400 flex-shrink-0" />
+                                      : <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                  }
+                                  <span className="text-sm text-slate-300 flex-1 truncate group-hover:text-white transition-colors">{nombre}</span>
+                                  <Download className="w-3.5 h-3.5 text-slate-500 group-hover:text-sym-red flex-shrink-0 transition-colors" />
+                                </a>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     )}
 

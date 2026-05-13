@@ -8,6 +8,7 @@ import {
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText,
   MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft, AlertTriangle, Lightbulb,
+  Paperclip, ImageIcon,
 } from 'lucide-react'
 import { Idea, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea, Problema } from '@/lib/types'
@@ -199,8 +200,8 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
   // Carga inicial (siempre fresca desde Supabase)
   useEffect(() => {
     fetch('/api/ideas')
-      .then(r => r.ok ? r.json() : [])
-      .then((data: Idea[]) => setIdeasVivas(data))
+      .then(r => r.ok ? r.json() : null)
+      .then((data: Idea[] | null) => { if (data !== null) setIdeasVivas(data) })
       .catch(() => {})
       .finally(() => setCargandoIdeas(false))
   }, [])
@@ -568,19 +569,46 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
                       </div>
                     )}
 
-                    {/* Archivos */}
+                    {/* Archivos adjuntos */}
                     {idea.archivos && idea.archivos.length > 0 && (
                       <div>
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                          <Tag className="w-3 h-3" />
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <Paperclip className="w-3.5 h-3.5" />
                           Archivos adjuntos ({idea.archivos.length})
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                          {idea.archivos.map(f => (
-                            <span key={f} className="text-xs bg-sym-card border border-sym-bord rounded-lg px-3 py-1.5 text-slate-400">
-                              {f}
-                            </span>
-                          ))}
+                        <div className="space-y-2">
+                          {idea.archivos.map(url => {
+                            const nombreCompleto = url.split('/').pop() ?? 'archivo'
+                            const nombre = nombreCompleto.replace(/^\d+_/, '')
+                            const ext = nombre.split('.').pop()?.toLowerCase() ?? ''
+                            const esImagen = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)
+                            const esPDF = ext === 'pdf'
+                            return (
+                              <div key={url} className="rounded-xl border border-sym-bord overflow-hidden bg-sym-card">
+                                {esImagen && (
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                                    <img src={url} alt={nombre} className="w-full max-h-52 object-cover hover:opacity-90 transition-opacity" />
+                                  </a>
+                                )}
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={nombre}
+                                  className="flex items-center gap-3 px-4 py-3 hover:bg-sym-surf/60 transition-colors group"
+                                >
+                                  {esImagen
+                                    ? <ImageIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    : esPDF
+                                      ? <FileText className="w-4 h-4 text-red-400 flex-shrink-0" />
+                                      : <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                  }
+                                  <span className="text-sm text-slate-300 flex-1 truncate group-hover:text-white transition-colors">{nombre}</span>
+                                  <Download className="w-3.5 h-3.5 text-slate-500 group-hover:text-sym-red flex-shrink-0 transition-colors" />
+                                </a>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
                     )}

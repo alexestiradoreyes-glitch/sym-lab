@@ -1,5 +1,5 @@
 // SYM LAB Service Worker — Cache-first para estáticos, Network-first para API
-const CACHE = 'symlab-v5'
+const CACHE = 'symlab-v6'
 
 // Páginas que nunca deben cachearse (datos en tiempo real)
 const NO_CACHE_PAGES = ['/admin', '/api/', '/ideas/']
@@ -41,11 +41,23 @@ self.addEventListener('fetch', e => {
 
   // Páginas dinámicas y API: siempre de red, nunca desde caché
   if (NO_CACHE_PAGES.some(p => url.pathname.startsWith(p))) {
+    const esApi = url.pathname.startsWith('/api/')
     e.respondWith(
-      fetch(request).catch(() => new Response(
-        JSON.stringify({ error: 'Sin conexión.' }),
-        { status: 503, headers: { 'Content-Type': 'application/json' } }
-      ))
+      fetch(request).catch(async () => {
+        if (esApi) {
+          return new Response(
+            JSON.stringify({ error: 'Sin conexión.' }),
+            { status: 503, headers: { 'Content-Type': 'application/json' } }
+          )
+        }
+        // Para páginas, intentar servir desde caché antes de mostrar error
+        const cached = await caches.match(request)
+        if (cached) return cached
+        return new Response(
+          '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Sin conexión — SYM LAB</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{background:#06060f;color:#94a3b8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:1rem;text-align:center}h1{color:#fff;font-size:1.5rem;margin-bottom:.5rem}a{color:#E8300A}</style></head><body><div><h1>Sin conexión</h1><p>Comprueba tu conexión a internet e inténtalo de nuevo.</p><p><a href="/">Volver al inicio</a></p></div></body></html>',
+          { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        )
+      })
     )
     return
   }

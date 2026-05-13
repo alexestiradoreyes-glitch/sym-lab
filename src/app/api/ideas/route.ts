@@ -95,7 +95,9 @@ export async function POST(request: NextRequest) {
             upsert: false,
           })
 
-        if (!uploadError) {
+        if (uploadError) {
+          console.error('[SYM LAB] Error subiendo archivo de idea:', uploadError.message, { bucket: BUCKET, ruta: nombreSeguro })
+        } else {
           const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(nombreSeguro)
           archivosGuardados.push(urlData.publicUrl)
         }
