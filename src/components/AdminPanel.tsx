@@ -4,12 +4,13 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { supabasePublic } from '@/lib/supabase-public'
 import Image from 'next/image'
 import AudioPlayer from './AudioPlayer'
+import AudioRecorder from './AudioRecorder'
 import {
   Download, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText,
   MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft, AlertTriangle, Lightbulb,
-  Paperclip, ImageIcon, Mic,
+  Paperclip, ImageIcon, Mic, X,
 } from 'lucide-react'
 import { Idea, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea, Problema } from '@/lib/types'
@@ -29,13 +30,18 @@ interface Props {
 
 /* ─── Sub-componente de comentarios por idea ─── */
 function SeccionComentarios({ ideaId }: { ideaId: string }) {
-  const [comentarios,   setComentarios]   = useState<Comentario[]>([])
-  const [cargando,      setCargando]      = useState(true)
-  const [nombre,        setNombre]        = useState('')
-  const [texto,         setTexto]         = useState('')
-  const [rol,           setRol]           = useState<RolComentario>('Colaborador')
-  const [enviando,      setEnviando]      = useState(false)
-  const [error,         setError]         = useState<string | null>(null)
+  const [comentarios,           setComentarios]           = useState<Comentario[]>([])
+  const [cargando,              setCargando]              = useState(true)
+  const [nombre,                setNombre]                = useState('')
+  const [texto,                 setTexto]                 = useState('')
+  const [rol,                   setRol]                   = useState<RolComentario>('Colaborador')
+  const [enviando,              setEnviando]              = useState(false)
+  const [error,                 setError]                 = useState<string | null>(null)
+  const [audioDuracion,         setAudioDuracion]         = useState(0)
+  const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([])
+  const [recorderKey,           setRecorderKey]           = useState(0)
+  const audioBlobRef = useRef<Blob | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const cargarComentarios = useCallback(async () => {
     setCargando(true)
@@ -49,30 +55,44 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
 
   useEffect(() => { cargarComentarios() }, [cargarComentarios])
 
+  const onAudioChange = (blob: Blob | null, dur: number) => {
+    audioBlobRef.current = blob
+    setAudioDuracion(dur)
+  }
+
   const handleEnviar = async () => {
-    if (!nombre.trim()) {
-      setError('El nombre es obligatorio.')
-      return
-    }
-    if (!texto.trim()) {
-      setError('Escribe un comentario.')
-      return
-    }
+    if (!nombre.trim()) { setError('El nombre es obligatorio.'); return }
+    const tieneContenido = texto.trim() || audioBlobRef.current || archivosSeleccionados.length > 0
+    if (!tieneContenido) { setError('Escribe un comentario, graba un audio o adjunta un archivo.'); return }
     setError(null)
     setEnviando(true)
 
     try {
-      const res = await fetch('/api/comentarios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ideaId, nombre, texto, rol }),
-      })
+      const fd = new FormData()
+      fd.append('ideaId', ideaId)
+      fd.append('nombre', nombre.trim())
+      fd.append('texto', texto.trim())
+      fd.append('rol', rol)
+      if (audioBlobRef.current) {
+        fd.append('audio', audioBlobRef.current, 'nota.webm')
+        fd.append('audioDuracion', String(audioDuracion))
+      }
+      for (const archivo of archivosSeleccionados) {
+        fd.append('archivos', archivo)
+      }
+
+      const res = await fetch('/api/comentarios', { method: 'POST', body: fd })
       if (res.ok) {
         const nuevo = await res.json()
         setComentarios(prev => [...prev, nuevo])
         setNombre('')
         setTexto('')
         setRol('Colaborador')
+        audioBlobRef.current = null
+        setAudioDuracion(0)
+        setArchivosSeleccionados([])
+        setRecorderKey(k => k + 1)
+        if (fileInputRef.current) fileInputRef.current.value = ''
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error || 'Error al guardar el comentario.')
@@ -86,7 +106,6 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
 
   return (
     <div className="border-t border-sym-bord/60 mt-5 pt-5">
-      {/* Cabecera comentarios */}
       <p className="text-slate-500 text-xs uppercase tracking-wider mb-4 flex items-center gap-1.5">
         <MessageSquare className="w-3.5 h-3.5" />
         Comentarios ({comentarios.length})
@@ -103,20 +122,51 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
             <div
               key={c.id}
               className={`rounded-xl border p-4 ${
-                c.rol === 'Autor'
-                  ? 'bg-sym-red/5 border-red-800/30'
-                  : 'bg-sym-surf/60 border-sym-bord/60'
+                c.rol === 'Autor' ? 'bg-sym-red/5 border-red-800/30' : 'bg-sym-surf/60 border-sym-bord/60'
               }`}
             >
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-white text-sm font-semibold">{c.nombre}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${ROL_COLORES[c.rol]}`}>
-                  {c.rol}
-                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${ROL_COLORES[c.rol]}`}>{c.rol}</span>
                 <span className="text-slate-600 text-xs ml-auto">{c.fechaHora}</span>
               </div>
               {c.texto && (
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{c.texto}</p>
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-2">{c.texto}</p>
+              )}
+              {c.audioUrl && (
+                <div className="mt-2">
+                  <AudioPlayer url={c.audioUrl} duracion={c.audioDuracion} />
+                </div>
+              )}
+              {c.archivos && c.archivos.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {c.archivos.map(url => {
+                    const nombreCompleto = url.split('/').pop() ?? 'archivo'
+                    const nombre = nombreCompleto.replace(/^\d+_/, '')
+                    const ext = nombre.split('.').pop()?.toLowerCase() ?? ''
+                    const esImagen = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)
+                    const esPDF = ext === 'pdf'
+                    return (
+                      <div key={url} className="rounded-lg border border-sym-bord overflow-hidden bg-sym-card">
+                        {esImagen && (
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                            <img src={url} alt={nombre} className="w-full max-h-40 object-cover hover:opacity-90 transition-opacity" />
+                          </a>
+                        )}
+                        <a href={url} target="_blank" rel="noopener noreferrer" download={nombre}
+                          className="flex items-center gap-2 px-3 py-2 hover:bg-sym-surf/60 transition-colors group">
+                          {esImagen
+                            ? <ImageIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                            : esPDF
+                              ? <FileText className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                              : <FileText className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />}
+                          <span className="text-xs text-slate-300 flex-1 truncate group-hover:text-white">{nombre}</span>
+                          <Download className="w-3 h-3 text-slate-500 group-hover:text-sym-red flex-shrink-0" />
+                        </a>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
           ))}
@@ -128,44 +178,62 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
         <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Añadir comentario</p>
 
         <div className="grid sm:grid-cols-2 gap-3">
-          <input
-            type="text"
-            value={nombre}
-            onChange={e => setNombre(e.target.value)}
-            placeholder="Tu nombre"
-            className="input-field text-sm py-2"
-          />
-          <select
-            value={rol}
-            onChange={e => setRol(e.target.value as RolComentario)}
-            className="input-field text-sm py-2"
-          >
-            {ROLES_COMENTARIO.map(r => (
-              <option key={r} value={r}>{r}</option>
-            ))}
+          <input type="text" value={nombre} onChange={e => setNombre(e.target.value)}
+            placeholder="Tu nombre" className="input-field text-sm py-2" />
+          <select value={rol} onChange={e => setRol(e.target.value as RolComentario)} className="input-field text-sm py-2">
+            {ROLES_COMENTARIO.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
 
-        <textarea
-          value={texto}
-          onChange={e => setTexto(e.target.value.slice(0, 1000))}
-          placeholder="Escribe tu comentario..."
-          rows={3}
-          className="input-field text-sm resize-y"
-        />
+        <textarea value={texto} onChange={e => setTexto(e.target.value.slice(0, 1000))}
+          placeholder="Escribe tu comentario... (opcional si adjuntas audio o archivo)"
+          rows={3} className="input-field text-sm resize-y" />
         <p className={`text-xs text-right ${texto.length >= 1000 ? 'text-red-400' : 'text-slate-600'}`}>
           {texto.length} / 1000
         </p>
 
-        {error && (
-          <p className="text-red-400 text-xs">{error}</p>
-        )}
+        {/* Nota de voz */}
+        <div>
+          <p className="text-slate-500 text-xs mb-2 flex items-center gap-1.5">
+            <Mic className="w-3 h-3" />
+            Nota de voz <span className="text-slate-600 font-normal">(opcional)</span>
+          </p>
+          <AudioRecorder key={recorderKey} onAudioChange={onAudioChange} disabled={enviando} maxSegundos={180} />
+        </div>
 
-        <button
-          onClick={handleEnviar}
-          disabled={enviando}
-          className="btn-primary flex items-center gap-2 text-sm py-2 px-4 ml-auto"
-        >
+        {/* Archivos adjuntos */}
+        <div>
+          <input ref={fileInputRef} type="file" multiple className="hidden"
+            onChange={e => {
+              setArchivosSeleccionados(prev => [...prev, ...Array.from(e.target.files || [])])
+              if (fileInputRef.current) fileInputRef.current.value = ''
+            }} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={enviando}
+            className="flex items-center gap-2 text-xs text-slate-400 hover:text-white border border-sym-bord px-3 py-1.5 rounded-lg hover:border-slate-500 transition-colors disabled:opacity-40">
+            <Paperclip className="w-3.5 h-3.5" />
+            Adjuntar archivos
+          </button>
+          {archivosSeleccionados.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {archivosSeleccionados.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-slate-400 bg-sym-surf/60 rounded-lg px-3 py-2">
+                  <Paperclip className="w-3 h-3 flex-shrink-0 text-slate-500" />
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <button type="button"
+                    onClick={() => setArchivosSeleccionados(prev => prev.filter((_, j) => j !== i))}
+                    className="text-slate-600 hover:text-red-400 transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-red-400 text-xs">{error}</p>}
+
+        <button onClick={handleEnviar} disabled={enviando}
+          className="btn-primary flex items-center gap-2 text-sm py-2 px-4 ml-auto">
           <Send className="w-3.5 h-3.5" />
           {enviando ? 'Publicando...' : 'Publicar comentario'}
         </button>

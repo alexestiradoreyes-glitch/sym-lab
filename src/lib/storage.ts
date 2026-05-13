@@ -20,6 +20,8 @@ export async function leerComentarios(ideaId: string): Promise<Comentario[]> {
     rol: row.rol,
     fechaHora: row.fecha_hora,
     audioUrl: row.audio_url || undefined,
+    audioDuracion: row.audio_duracion || undefined,
+    archivos: row.archivos || undefined,
   }))
 }
 
@@ -31,6 +33,9 @@ export async function guardarComentario(comentario: Comentario): Promise<void> {
     texto: comentario.texto || null,
     rol: comentario.rol,
     fecha_hora: comentario.fechaHora,
+    audio_url: comentario.audioUrl || null,
+    audio_duracion: comentario.audioDuracion || null,
+    archivos: comentario.archivos?.length ? comentario.archivos : null,
   })
   if (error) throw new Error(error.message)
 }

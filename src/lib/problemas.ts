@@ -69,11 +69,14 @@ export async function leerProblemas(): Promise<Problema[]> {
 
 export async function guardarSolucion(s: ProblemasSolucion): Promise<void> {
   const { error } = await supabase.from('problema_soluciones').insert({
-    id:          s.id,
-    problema_id: s.problemaId,
-    nombre:      s.nombre,
-    solucion:    s.solucion,
-    fecha_hora:  s.fechaHora,
+    id:             s.id,
+    problema_id:    s.problemaId,
+    nombre:         s.nombre,
+    solucion:       s.solucion,
+    fecha_hora:     s.fechaHora,
+    audio_url:      s.audioUrl || null,
+    audio_duracion: s.audioDuracion || null,
+    archivos:       s.archivos?.length ? s.archivos : null,
   })
   if (error) throw new Error(error.message)
 }
@@ -88,11 +91,14 @@ export async function leerSoluciones(problemaId: string): Promise<ProblemasSoluc
   if (error) return []
 
   return (data || []).map(row => ({
-    id:         row.id,
-    problemaId: row.problema_id,
-    nombre:     row.nombre,
-    solucion:   row.solucion,
-    fechaHora:  row.fecha_hora,
+    id:            row.id,
+    problemaId:    row.problema_id,
+    nombre:        row.nombre,
+    solucion:      row.solucion,
+    fechaHora:     row.fecha_hora,
+    audioUrl:      row.audio_url || undefined,
+    audioDuracion: row.audio_duracion || undefined,
+    archivos:      row.archivos || undefined,
   }))
 }
 

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   ChevronDown, ChevronUp, Mail, Building,
   Calendar, FileText, Trash2, RefreshCw, Send, Loader2, MessageSquare,
-  Download, ImageIcon, Paperclip, Link2, Mic,
+  Download, ImageIcon, Paperclip, Link2, Mic, X,
 } from 'lucide-react'
 import AudioPlayer from './AudioPlayer'
+import AudioRecorder from './AudioRecorder'
 import type { Problema, EstadoProblema, ProblemasSolucion } from '@/lib/types'
 import {
   ESTADOS_PROBLEMA, ESTADO_PROBLEMA_COLORES,
@@ -17,12 +18,17 @@ const PROBLEMAS_POR_PAGINA = 20
 
 /* ─── Chat permanente por problema ─── */
 function ChatProblema({ problemaId }: { problemaId: string }) {
-  const [mensajes,  setMensajes]  = useState<ProblemasSolucion[]>([])
-  const [cargando,  setCargando]  = useState(true)
-  const [nombre,    setNombre]    = useState('')
-  const [texto,     setTexto]     = useState('')
-  const [enviando,  setEnviando]  = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
+  const [mensajes,              setMensajes]              = useState<ProblemasSolucion[]>([])
+  const [cargando,              setCargando]              = useState(true)
+  const [nombre,                setNombre]                = useState('')
+  const [texto,                 setTexto]                 = useState('')
+  const [enviando,              setEnviando]              = useState(false)
+  const [error,                 setError]                 = useState<string | null>(null)
+  const [audioDuracion,         setAudioDuracion]         = useState(0)
+  const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([])
+  const [recorderKey,           setRecorderKey]           = useState(0)
+  const audioBlobRef = useRef<Blob | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -36,21 +42,40 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
 
   useEffect(() => { cargar() }, [cargar])
 
+  const onAudioChange = (blob: Blob | null, dur: number) => {
+    audioBlobRef.current = blob
+    setAudioDuracion(dur)
+  }
+
   const handleEnviar = async () => {
     if (!nombre.trim()) { setError('Introduce tu nombre.'); return }
-    if (!texto.trim())  { setError('Escribe un mensaje.');  return }
+    const tieneContenido = texto.trim() || audioBlobRef.current || archivosSeleccionados.length > 0
+    if (!tieneContenido) { setError('Escribe un mensaje, graba un audio o adjunta un archivo.'); return }
     setError(null)
     setEnviando(true)
     try {
-      const res = await fetch('/api/problemas/soluciones', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemaId, nombre, solucion: texto }),
-      })
+      const fd = new FormData()
+      fd.append('problemaId', problemaId)
+      fd.append('nombre', nombre.trim())
+      fd.append('solucion', texto.trim())
+      if (audioBlobRef.current) {
+        fd.append('audio', audioBlobRef.current, 'nota.webm')
+        fd.append('audioDuracion', String(audioDuracion))
+      }
+      for (const archivo of archivosSeleccionados) {
+        fd.append('archivos', archivo)
+      }
+
+      const res = await fetch('/api/problemas/soluciones', { method: 'POST', body: fd })
       if (res.ok) {
         const nuevo = await res.json()
         setMensajes(prev => [...prev, nuevo])
         setTexto('')
+        audioBlobRef.current = null
+        setAudioDuracion(0)
+        setArchivosSeleccionados([])
+        setRecorderKey(k => k + 1)
+        if (fileInputRef.current) fileInputRef.current.value = ''
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error || 'Error al enviar.')
@@ -80,16 +105,51 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
             <div
               key={m.id}
               className={`rounded-xl p-3.5 border ${
-                i % 2 === 0
-                  ? 'bg-sym-surf/60 border-sym-bord/60'
-                  : 'bg-blue-950/20 border-blue-800/30'
+                i % 2 === 0 ? 'bg-sym-surf/60 border-sym-bord/60' : 'bg-blue-950/20 border-blue-800/30'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
                 <span className="text-white text-sm font-semibold">{m.nombre}</span>
                 <span className="text-slate-600 text-xs">{m.fechaHora}</span>
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{m.solucion}</p>
+              {m.solucion && (
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-2">{m.solucion}</p>
+              )}
+              {m.audioUrl && (
+                <div className="mt-2">
+                  <AudioPlayer url={m.audioUrl} duracion={m.audioDuracion} />
+                </div>
+              )}
+              {m.archivos && m.archivos.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {m.archivos.map(url => {
+                    const nombreCompleto = url.split('/').pop() ?? 'archivo'
+                    const nombre = nombreCompleto.replace(/^\d+_/, '')
+                    const ext = nombre.split('.').pop()?.toLowerCase() ?? ''
+                    const esImagen = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)
+                    const esPDF = ext === 'pdf'
+                    return (
+                      <div key={url} className="rounded-lg border border-sym-bord overflow-hidden bg-sym-card">
+                        {esImagen && (
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                            <img src={url} alt={nombre} className="w-full max-h-40 object-cover hover:opacity-90 transition-opacity" />
+                          </a>
+                        )}
+                        <a href={url} target="_blank" rel="noopener noreferrer" download={nombre}
+                          className="flex items-center gap-2 px-3 py-2 hover:bg-sym-surf/60 transition-colors group">
+                          {esImagen
+                            ? <ImageIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                            : esPDF
+                              ? <FileText className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                              : <FileText className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />}
+                          <span className="text-xs text-slate-300 flex-1 truncate group-hover:text-white">{nombre}</span>
+                          <Download className="w-3 h-3 text-slate-500 group-hover:text-sym-red flex-shrink-0" />
+                        </a>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           ))
         )}
@@ -99,38 +159,64 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
       <div className="bg-sym-surf/40 border border-sym-bord/60 rounded-xl p-4 space-y-3">
         <div>
           <label className="input-label text-xs mb-1">Nombre <span className="text-sym-red">*</span></label>
-          <input
-            type="text"
-            value={nombre}
-            onChange={e => setNombre(e.target.value)}
-            placeholder="Tu nombre y apellidos"
-            className="input-field text-sm py-2"
-          />
+          <input type="text" value={nombre} onChange={e => setNombre(e.target.value)}
+            placeholder="Tu nombre y apellidos" className="input-field text-sm py-2" />
         </div>
         <div>
-          <label className="input-label text-xs mb-1">Comentario <span className="text-sym-red">*</span></label>
-          <textarea
-            value={texto}
-            onChange={e => setTexto(e.target.value.slice(0, 2000))}
+          <label className="input-label text-xs mb-1">
+            Comentario <span className="text-slate-600 font-normal">(opcional si adjuntas audio o archivo)</span>
+          </label>
+          <textarea value={texto} onChange={e => setTexto(e.target.value.slice(0, 2000))}
             placeholder="Escribe tu comentario o respuesta..."
-            rows={3}
-            className="input-field text-sm resize-y"
-            onKeyDown={e => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleEnviar()
-            }}
-          />
-        </div>
-        <div className="flex items-center justify-between">
+            rows={3} className="input-field text-sm resize-y"
+            onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleEnviar() }} />
           <span className={`text-xs ${texto.length >= 2000 ? 'text-red-400' : 'text-slate-600'}`}>
             {texto.length} / 2000 · Ctrl+Enter para enviar
           </span>
+        </div>
+
+        {/* Nota de voz */}
+        <div>
+          <p className="text-slate-500 text-xs mb-2 flex items-center gap-1.5">
+            <Mic className="w-3 h-3" />
+            Nota de voz <span className="text-slate-600 font-normal">(opcional)</span>
+          </p>
+          <AudioRecorder key={recorderKey} onAudioChange={onAudioChange} disabled={enviando} maxSegundos={180} />
+        </div>
+
+        {/* Archivos adjuntos */}
+        <div>
+          <input ref={fileInputRef} type="file" multiple className="hidden"
+            onChange={e => {
+              setArchivosSeleccionados(prev => [...prev, ...Array.from(e.target.files || [])])
+              if (fileInputRef.current) fileInputRef.current.value = ''
+            }} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={enviando}
+            className="flex items-center gap-2 text-xs text-slate-400 hover:text-white border border-sym-bord px-3 py-1.5 rounded-lg hover:border-slate-500 transition-colors disabled:opacity-40">
+            <Paperclip className="w-3.5 h-3.5" />
+            Adjuntar archivos
+          </button>
+          {archivosSeleccionados.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {archivosSeleccionados.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-slate-400 bg-sym-surf/60 rounded-lg px-3 py-2">
+                  <Paperclip className="w-3 h-3 flex-shrink-0 text-slate-500" />
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <button type="button"
+                    onClick={() => setArchivosSeleccionados(prev => prev.filter((_, j) => j !== i))}
+                    className="text-slate-600 hover:text-red-400 transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
           {error && <p className="text-red-400 text-xs">{error}</p>}
-          <button
-            type="button"
-            onClick={handleEnviar}
-            disabled={enviando}
-            className="btn-primary flex items-center gap-2 text-sm py-2 px-4"
-          >
+          <button type="button" onClick={handleEnviar} disabled={enviando}
+            className="btn-primary flex items-center gap-2 text-sm py-2 px-4 ml-auto">
             {enviando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             {enviando ? 'Enviando...' : 'Enviar'}
           </button>

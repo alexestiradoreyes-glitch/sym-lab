@@ -99,6 +99,8 @@ export interface Comentario {
   rol: RolComentario
   fechaHora: string
   audioUrl?: string
+  audioDuracion?: number
+  archivos?: string[]
 }
 
 export interface Enlace {
@@ -228,4 +230,7 @@ export interface ProblemasSolucion {
   nombre: string
   solucion: string
   fechaHora: string
+  audioUrl?: string
+  audioDuracion?: number
+  archivos?: string[]
 }
