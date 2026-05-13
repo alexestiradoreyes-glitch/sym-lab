@@ -10,6 +10,7 @@ import {
   Loader2, ChevronRight, File as FileIcon, Link2,
 } from 'lucide-react'
 import { CATEGORIAS, NIVELES_MADUREZ, CONSENTIMIENTO_TEXTOS } from '@/lib/types'
+import AudioRecorder from './AudioRecorder'
 
 /* ─── Schema de validación ─── */
 const schema = z.object({
@@ -73,7 +74,14 @@ export default function IdeaForm() {
   const [dragOver, setDragOver]           = useState(false)
   const [isSubmitting, setIsSubmitting]   = useState(false)
   const [submitError, setSubmitError]     = useState<string | null>(null)
-  const inputRef     = useRef<HTMLInputElement>(null)
+  const inputRef       = useRef<HTMLInputElement>(null)
+  const audioBlobRef   = useRef<Blob | null>(null)
+  const [audioDuracion, setAudioDuracion] = useState(0)
+
+  const onAudioChange = useCallback((blob: Blob | null, dur: number) => {
+    audioBlobRef.current = blob
+    setAudioDuracion(dur)
+  }, [])
   const router       = useRouter()
   const searchParams = useSearchParams()
 
@@ -139,6 +147,20 @@ export default function IdeaForm() {
       if (val !== undefined && val !== null) fd.append(key, String(val))
     })
     archivos.forEach(f => fd.append('archivos', f))
+
+    if (audioBlobRef.current) {
+      try {
+        const afd = new FormData()
+        afd.append('audio', audioBlobRef.current, 'nota.webm')
+        afd.append('contexto', 'ideas')
+        const ar = await fetch('/api/audio/upload', { method: 'POST', body: afd })
+        const aj = await ar.json()
+        if (ar.ok && aj.url) {
+          fd.append('audioUrl', aj.url)
+          fd.append('audioDuracion', String(audioDuracion))
+        }
+      } catch { /* audio es opcional */ }
+    }
 
     try {
       const res = await fetch('/api/ideas', { method: 'POST', body: fd })
@@ -256,6 +278,17 @@ export default function IdeaForm() {
               {...register('titulo')}
             />
             {errors.titulo && <p className="input-error"><AlertCircle className="w-3 h-3" />{errors.titulo.message}</p>}
+          </div>
+
+          {/* Audio opcional */}
+          <div>
+            <p className="input-label">
+              Nota de voz <span className="text-slate-600 font-normal">(opcional)</span>
+            </p>
+            <p className="text-slate-600 text-xs mb-3">
+              Graba un audio para complementar tu descripción. Máx. 3 minutos.
+            </p>
+            <AudioRecorder onAudioChange={onAudioChange} disabled={isSubmitting} />
           </div>
 
           {/* Categoría */}

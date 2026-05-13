@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import {
   ChevronDown, ChevronUp, Mail, Building,
   Calendar, FileText, Trash2, RefreshCw, Send, Loader2, MessageSquare,
-  Download, ImageIcon, Paperclip, Link2,
+  Download, ImageIcon, Paperclip, Link2, Mic,
 } from 'lucide-react'
+import AudioPlayer from './AudioPlayer'
 import type { Problema, EstadoProblema, ProblemasSolucion } from '@/lib/types'
 import {
   ESTADOS_PROBLEMA, ESTADO_PROBLEMA_COLORES,
@@ -318,6 +319,17 @@ export default function ProblemasAdminSection({ problemas }: Props) {
                             </a>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Audio */}
+                    {p.audioUrl && (
+                      <div>
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Mic className="w-3.5 h-3.5" />
+                          Nota de voz
+                        </p>
+                        <AudioPlayer url={p.audioUrl} duracion={p.audioDuracion} />
                       </div>
                     )}
 

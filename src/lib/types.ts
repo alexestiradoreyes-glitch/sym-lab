@@ -189,6 +189,8 @@ export interface Problema {
   proximosPasos?: string
   responsable?: string
   fechaEstimada?: string
+  audioUrl?: string
+  audioDuracion?: number
 }
 
 export const FRECUENCIAS_PROBLEMA: FrecuenciaProblema[] = ['Puntual', 'Frecuente', 'Muy frecuente', 'Constante']

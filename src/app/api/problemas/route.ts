@@ -35,6 +35,9 @@ export async function POST(request: NextRequest) {
     const solucionPropuesta  = (fd.get('solucionPropuesta')  as string)?.trim()
     const beneficioEsperado  = (fd.get('beneficioEsperado')  as string)?.trim()
     const recursosNecesarios = (fd.get('recursosNecesarios') as string)?.trim()
+    const audioUrl           = (fd.get('audioUrl')           as string)?.trim() || undefined
+    const audioDuracionStr   = fd.get('audioDuracion') as string | null
+    const audioDuracion      = audioDuracionStr ? parseInt(audioDuracionStr, 10) : undefined
 
     const errores: string[] = []
     if (!nombre)      errores.push('nombre')
@@ -78,6 +81,8 @@ export async function POST(request: NextRequest) {
       beneficioEsperado:   beneficioEsperado  || undefined,
       recursosNecesarios:  recursosNecesarios || undefined,
       estado:              'Nuevo',
+      audioUrl,
+      audioDuracion,
     }
 
     await guardarProblema(problema)

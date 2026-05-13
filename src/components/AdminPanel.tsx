@@ -3,12 +3,13 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { supabasePublic } from '@/lib/supabase-public'
 import Image from 'next/image'
+import AudioPlayer from './AudioPlayer'
 import {
   Download, ChevronDown, ChevronUp,
   Mail, Building, Phone, Calendar,
   Tag, TrendingUp, FileText,
   MessageSquare, Send, Link2, RefreshCw, Trash2, ArrowLeft, AlertTriangle, Lightbulb,
-  Paperclip, ImageIcon,
+  Paperclip, ImageIcon, Mic,
 } from 'lucide-react'
 import { Idea, CATEGORIA_COLORES, MADUREZ_COLORES, ROLES_COMENTARIO, ESTADOS_IDEA, ESTADO_COLORES } from '@/lib/types'
 import type { Comentario, RolComentario, EstadoIdea, Problema } from '@/lib/types'
@@ -519,18 +520,24 @@ export default function AdminPanel({ ideas, problemas = [] }: Props) {
                       </div>
                     </div>
 
-                    {/* Descripción / solo audio */}
-                    {idea.descripcion?.trim() ? (
+                    {/* Descripción */}
+                    {idea.descripcion?.trim() && (
                       <div className="border-l-4 border-sym-red pl-4 py-1">
                         <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Descripción completa</p>
                         <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{idea.descripcion}</p>
                       </div>
-                    ) : idea.audioUrl ? (
-                      <div className="border-l-4 border-sym-red pl-4 py-1">
-                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Descripción completa</p>
-                        <p className="text-slate-500 text-sm italic">Idea enviada mediante audio explicativo.</p>
+                    )}
+
+                    {/* Audio */}
+                    {idea.audioUrl && (
+                      <div>
+                        <p className="text-slate-500 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Mic className="w-3.5 h-3.5" />
+                          Nota de voz
+                        </p>
+                        <AudioPlayer url={idea.audioUrl} duracion={idea.audioDuracion} />
                       </div>
-                    ) : null}
+                    )}
 
                     {idea.problemaResuelve?.trim() && (
                       <div className="border-l-4 border-blue-600 pl-4 py-1">

@@ -12,6 +12,7 @@ import {
 import {
   FRECUENCIAS_PROBLEMA, IMPACTOS_PROBLEMA, AREAS_PROBLEMA,
 } from '@/lib/types'
+import AudioRecorder from './AudioRecorder'
 
 const schema = z.object({
   nombre:             z.string().min(2, 'Mínimo 2 caracteres').max(120),
@@ -68,8 +69,15 @@ export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError]   = useState<string | null>(null)
   const [enviado, setEnviado]           = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const router   = useRouter()
+  const inputRef     = useRef<HTMLInputElement>(null)
+  const audioBlobRef = useRef<Blob | null>(null)
+  const [audioDuracion, setAudioDuracion] = useState(0)
+  const router = useRouter()
+
+  const onAudioChange = useCallback((blob: Blob | null, dur: number) => {
+    audioBlobRef.current = blob
+    setAudioDuracion(dur)
+  }, [])
 
   const {
     register,
@@ -110,6 +118,20 @@ export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
       if (val !== undefined && val !== null) fd.append(key, String(val))
     })
     archivos.forEach(f => fd.append('archivos', f))
+
+    if (audioBlobRef.current) {
+      try {
+        const afd = new FormData()
+        afd.append('audio', audioBlobRef.current, 'nota.webm')
+        afd.append('contexto', 'problemas')
+        const ar = await fetch('/api/audio/upload', { method: 'POST', body: afd })
+        const aj = await ar.json()
+        if (ar.ok && aj.url) {
+          fd.append('audioUrl', aj.url)
+          fd.append('audioDuracion', String(audioDuracion))
+        }
+      } catch { /* audio es opcional */ }
+    }
 
     try {
       const res  = await fetch('/api/problemas', { method: 'POST', body: fd })
@@ -218,6 +240,17 @@ export default function ProblemaForm({ onSuccess }: ProblemaFormProps = {}) {
               placeholder="¿Dónde ocurre? ¿Cuándo ocurre? ¿A quién afecta? ¿Con qué frecuencia?"
               {...register('contexto')}
             />
+          </div>
+
+          {/* Audio opcional */}
+          <div>
+            <p className="input-label">
+              Nota de voz <span className="text-slate-600 font-normal">(opcional)</span>
+            </p>
+            <p className="text-slate-600 text-xs mb-3">
+              Graba un audio para describir el problema. Máx. 3 minutos.
+            </p>
+            <AudioRecorder onAudioChange={onAudioChange} disabled={isSubmitting} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">

@@ -22,6 +22,8 @@ export async function guardarProblema(p: Problema): Promise<void> {
     beneficio_esperado:  p.beneficioEsperado || null,
     recursos_necesarios: p.recursosNecesarios || null,
     estado:              p.estado || 'Nuevo',
+    audio_url:           p.audioUrl || null,
+    audio_duracion:      p.audioDuracion || null,
   })
   if (error) throw new Error(error.message)
 }
@@ -60,6 +62,8 @@ export async function leerProblemas(): Promise<Problema[]> {
     proximosPasos:       row.proximos_pasos || undefined,
     responsable:         row.responsable || undefined,
     fechaEstimada:       row.fecha_estimada || undefined,
+    audioUrl:            row.audio_url || undefined,
+    audioDuracion:       row.audio_duracion || undefined,
   }))
 }
 
