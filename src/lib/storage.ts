@@ -30,7 +30,7 @@ export async function guardarComentario(comentario: Comentario): Promise<void> {
     id: comentario.id,
     idea_id: comentario.ideaId,
     nombre: comentario.nombre,
-    texto: comentario.texto || null,
+    texto: comentario.texto ?? '',
     rol: comentario.rol,
     fecha_hora: comentario.fechaHora,
     audio_url: comentario.audioUrl || null,

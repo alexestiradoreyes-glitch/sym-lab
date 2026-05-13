@@ -54,19 +54,45 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
     setError(null)
     setEnviando(true)
     try {
-      const fd = new FormData()
-      fd.append('problemaId', problemaId)
-      fd.append('nombre', nombre.trim())
-      fd.append('solucion', texto.trim())
+      // 1. Subir audio (opcional)
+      let audioUrl: string | undefined
       if (audioBlobRef.current) {
-        fd.append('audio', audioBlobRef.current, 'nota.webm')
-        fd.append('audioDuracion', String(audioDuracion))
-      }
-      for (const archivo of archivosSeleccionados) {
-        fd.append('archivos', archivo)
+        try {
+          const afd = new FormData()
+          afd.append('audio', audioBlobRef.current, 'nota.webm')
+          afd.append('contexto', 'soluciones')
+          const ar = await fetch('/api/audio/upload', { method: 'POST', body: afd })
+          const aj = await ar.json()
+          if (ar.ok && aj.url) audioUrl = aj.url
+        } catch { /* audio es opcional */ }
       }
 
-      const res = await fetch('/api/problemas/soluciones', { method: 'POST', body: fd })
+      // 2. Subir archivos adjuntos (opcional)
+      const archivosUrls: string[] = []
+      for (const archivo of archivosSeleccionados) {
+        try {
+          const ffd = new FormData()
+          ffd.append('archivo', archivo)
+          ffd.append('contexto', `soluciones_${problemaId}`)
+          const fr = await fetch('/api/adjuntos/upload', { method: 'POST', body: ffd })
+          const fj = await fr.json()
+          if (fr.ok && fj.url) archivosUrls.push(fj.url)
+        } catch { /* archivos son opcionales */ }
+      }
+
+      // 3. Guardar mensaje en JSON
+      const res = await fetch('/api/problemas/soluciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemaId,
+          nombre: nombre.trim(),
+          solucion: texto.trim(),
+          ...(audioUrl && { audioUrl, audioDuracion }),
+          ...(archivosUrls.length > 0 && { archivos: archivosUrls }),
+        }),
+      })
+
       if (res.ok) {
         const nuevo = await res.json()
         setMensajes(prev => [...prev, nuevo])

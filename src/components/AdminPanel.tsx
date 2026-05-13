@@ -68,20 +68,46 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
     setEnviando(true)
 
     try {
-      const fd = new FormData()
-      fd.append('ideaId', ideaId)
-      fd.append('nombre', nombre.trim())
-      fd.append('texto', texto.trim())
-      fd.append('rol', rol)
+      // 1. Subir audio (opcional)
+      let audioUrl: string | undefined
       if (audioBlobRef.current) {
-        fd.append('audio', audioBlobRef.current, 'nota.webm')
-        fd.append('audioDuracion', String(audioDuracion))
-      }
-      for (const archivo of archivosSeleccionados) {
-        fd.append('archivos', archivo)
+        try {
+          const afd = new FormData()
+          afd.append('audio', audioBlobRef.current, 'nota.webm')
+          afd.append('contexto', 'comentarios')
+          const ar = await fetch('/api/audio/upload', { method: 'POST', body: afd })
+          const aj = await ar.json()
+          if (ar.ok && aj.url) audioUrl = aj.url
+        } catch { /* audio es opcional */ }
       }
 
-      const res = await fetch('/api/comentarios', { method: 'POST', body: fd })
+      // 2. Subir archivos adjuntos (opcional)
+      const archivosUrls: string[] = []
+      for (const archivo of archivosSeleccionados) {
+        try {
+          const ffd = new FormData()
+          ffd.append('archivo', archivo)
+          ffd.append('contexto', `comentarios_${ideaId}`)
+          const fr = await fetch('/api/adjuntos/upload', { method: 'POST', body: ffd })
+          const fj = await fr.json()
+          if (fr.ok && fj.url) archivosUrls.push(fj.url)
+        } catch { /* archivos son opcionales */ }
+      }
+
+      // 3. Guardar comentario en JSON
+      const res = await fetch('/api/comentarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ideaId,
+          nombre: nombre.trim(),
+          texto: texto.trim(),
+          rol,
+          ...(audioUrl && { audioUrl, audioDuracion }),
+          ...(archivosUrls.length > 0 && { archivos: archivosUrls }),
+        }),
+      })
+
       if (res.ok) {
         const nuevo = await res.json()
         setComentarios(prev => [...prev, nuevo])
