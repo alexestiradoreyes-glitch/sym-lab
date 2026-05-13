@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
-import { leerComentarios, guardarComentario } from '@/lib/storage'
+import { leerComentarios, guardarComentario, eliminarComentario } from '@/lib/storage'
 import { enviarPush } from '@/lib/push'
 import type { RolComentario } from '@/lib/types'
 
 export const runtime = 'nodejs'
+
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
+  try {
+    await eliminarComentario(id)
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error('[SYM LAB] Error eliminando comentario:', error)
+    return NextResponse.json({ error: 'No se pudo eliminar' }, { status: 500 })
+  }
+}
 
 export async function GET(request: NextRequest) {
   const ideaId = request.nextUrl.searchParams.get('ideaId')

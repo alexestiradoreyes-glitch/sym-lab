@@ -27,6 +27,8 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
   const [audioDuracion,         setAudioDuracion]         = useState(0)
   const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([])
   const [recorderKey,           setRecorderKey]           = useState(0)
+  const [confirmEliminar,       setConfirmEliminar]       = useState<string | null>(null)
+  const [eliminandoMsg,         setEliminandoMsg]         = useState(false)
   const audioBlobRef = useRef<Blob | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -113,6 +115,18 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
     }
   }
 
+  const handleEliminarMensaje = async (id: string) => {
+    setEliminandoMsg(true)
+    try {
+      const res = await fetch(`/api/problemas/soluciones?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setMensajes(prev => prev.filter(m => m.id !== id))
+        setConfirmEliminar(null)
+      }
+    } catch { /* ignore */ }
+    setEliminandoMsg(false)
+  }
+
   return (
     <div className="border-t border-sym-bord/60 pt-5 space-y-4">
       <p className="text-slate-500 text-xs uppercase tracking-wider flex items-center gap-1.5">
@@ -134,9 +148,27 @@ function ChatProblema({ problemaId }: { problemaId: string }) {
                 i % 2 === 0 ? 'bg-sym-surf/60 border-sym-bord/60' : 'bg-blue-950/20 border-blue-800/30'
               }`}
             >
-              <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className="text-white text-sm font-semibold">{m.nombre}</span>
-                <span className="text-slate-600 text-xs">{m.fechaHora}</span>
+                <span className="text-slate-600 text-xs ml-auto">{m.fechaHora}</span>
+                {confirmEliminar === m.id ? (
+                  <span className="flex items-center gap-1.5 text-xs">
+                    <span className="text-slate-400">¿Eliminar?</span>
+                    <button onClick={() => handleEliminarMensaje(m.id)} disabled={eliminandoMsg}
+                      className="text-red-400 hover:text-red-300 font-medium px-1.5 py-0.5 rounded hover:bg-red-900/20 transition-colors">
+                      Sí
+                    </button>
+                    <button onClick={() => setConfirmEliminar(null)}
+                      className="text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-white/5 transition-colors">
+                      No
+                    </button>
+                  </span>
+                ) : (
+                  <button onClick={() => setConfirmEliminar(m.id)} title="Eliminar mensaje"
+                    className="text-slate-600 hover:text-red-400 p-1 rounded transition-colors">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
               {m.solucion && (
                 <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-2">{m.solucion}</p>

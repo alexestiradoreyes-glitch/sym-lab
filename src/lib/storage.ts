@@ -78,3 +78,8 @@ export async function eliminarEnlace(id: string): Promise<boolean> {
   const { error } = await supabase.from('enlaces').delete().eq('id', id)
   return !error
 }
+
+export async function eliminarComentario(id: string): Promise<void> {
+  const { error } = await supabase.from('comentarios').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}

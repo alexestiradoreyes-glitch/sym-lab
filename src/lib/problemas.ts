@@ -102,6 +102,11 @@ export async function leerSoluciones(problemaId: string): Promise<ProblemasSoluc
   }))
 }
 
+export async function eliminarSolucion(id: string): Promise<void> {
+  const { error } = await supabase.from('problema_soluciones').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export async function subirArchivosProblema(id: string, archivos: File[]): Promise<string[]> {
   const urls: string[] = []
   for (const archivo of archivos) {

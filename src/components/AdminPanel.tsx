@@ -40,6 +40,8 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
   const [audioDuracion,         setAudioDuracion]         = useState(0)
   const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([])
   const [recorderKey,           setRecorderKey]           = useState(0)
+  const [confirmEliminar,       setConfirmEliminar]       = useState<string | null>(null)
+  const [eliminandoCom,         setEliminandoCom]         = useState(false)
   const audioBlobRef = useRef<Blob | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -130,6 +132,18 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
     }
   }
 
+  const handleEliminarComentario = async (id: string) => {
+    setEliminandoCom(true)
+    try {
+      const res = await fetch(`/api/comentarios?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setComentarios(prev => prev.filter(c => c.id !== id))
+        setConfirmEliminar(null)
+      }
+    } catch { /* ignore */ }
+    setEliminandoCom(false)
+  }
+
   return (
     <div className="border-t border-sym-bord/60 mt-5 pt-5">
       <p className="text-slate-500 text-xs uppercase tracking-wider mb-4 flex items-center gap-1.5">
@@ -155,6 +169,24 @@ function SeccionComentarios({ ideaId }: { ideaId: string }) {
                 <span className="text-white text-sm font-semibold">{c.nombre}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${ROL_COLORES[c.rol]}`}>{c.rol}</span>
                 <span className="text-slate-600 text-xs ml-auto">{c.fechaHora}</span>
+                {confirmEliminar === c.id ? (
+                  <span className="flex items-center gap-1.5 text-xs">
+                    <span className="text-slate-400">¿Eliminar?</span>
+                    <button onClick={() => handleEliminarComentario(c.id)} disabled={eliminandoCom}
+                      className="text-red-400 hover:text-red-300 font-medium px-1.5 py-0.5 rounded hover:bg-red-900/20 transition-colors">
+                      Sí
+                    </button>
+                    <button onClick={() => setConfirmEliminar(null)}
+                      className="text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-white/5 transition-colors">
+                      No
+                    </button>
+                  </span>
+                ) : (
+                  <button onClick={() => setConfirmEliminar(c.id)} title="Eliminar comentario"
+                    className="text-slate-600 hover:text-red-400 p-1 rounded transition-colors">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
               {c.texto && (
                 <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-2">{c.texto}</p>
